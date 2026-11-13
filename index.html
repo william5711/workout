@@ -199,7 +199,7 @@ function parseLines(text, old = []) {
     const type = guessType(name), muscle = type === "strength" ? guessMuscle(name) : null;
     const minM = /(\d+)\s*min/i.exec(rest);
     const setM = /(\d+)\s*[x×]\s*(\d+)/i.exec(rest);
-    const wM = /@\s*(\d+(?:\.\d+)?)/.exec(rest) || /(\d+(?:\.\d+)?)\s*lb/i.exec(rest);
+    const wM = /@\s*(\d+(?:\.\d+)?)/.exec(rest) || /(\d+(?:\.\d+)?)\s*kg/i.exec(rest);
     if (setM) {
       const n = Math.min(12, +setM[1]), r = +setM[2], w = wM ? +wM[1] : null;
       const sets = Array.from({ length: n }, (_, k) => ({ w, r, done: !!prev?.sets?.[k]?.done }));
@@ -305,17 +305,17 @@ function previewApi() {
   const t = todayISO(), id = () => "p" + Math.random().toString(36).slice(2, 9);
   const L = (lines, done) => parseLines(lines).map(e => done ? { ...e, done: true, sets: e.sets.map(s => ({ ...s, done: true })) } : e);
   const mk = (off, title, kind, lines, done = true, src = "app") => ({ id: id(), day: addDays(t, off), title, kind, status: done ? "done" : "planned", exercises: L(lines, done), notes: "", source: src, created_at: new Date().toISOString() });
-  const push = (w) => `Bench press: 4x8 @${w}\nOverhead press: 3x10 @75\nTricep pushdown: 3x12 @50`;
-  const pull = `Barbell row: 4x8 @115\nLat pulldown: 3x10 @110\nBicep curl: 3x12 @30`;
-  const legs = `Squat: 4x6 @185\nRomanian deadlift: 3x8 @135\nWalking lunges: 3x10`;
+  const push = (w) => `Bench press: 4x8 @${w}\nDumbbell shoulder press: 3x10 @20\nTricep pushdown: 3x12 @22.5`;
+  const pull = `Cable row: 4x10 @40\nLat pulldown: 3x12 @38\nBicep curl: 3x12 @12`;
+  const legs = `Squat: 4x10 @40\nRomanian deadlift: 3x10 @30\nWalking lunges: 3x10`;
   S.sessions = [
-    mk(-30, "Push day", "strength", push(115)), mk(-27, "Legs", "strength", legs), mk(-25, "Pull day", "strength", pull), mk(-23, "Easy run", "cardio", "Run: 25 min"),
-    mk(-21, "Push day", "strength", push(120)), mk(-19, "Full-body stretch", "stretch", "Hip stretch: 10 min\nHamstring stretch: 5 min"), mk(-18, "Pull day", "strength", pull),
-    mk(-16, "Legs", "strength", legs), mk(-14, "Push day", "strength", push(125)), mk(-13, "Bike", "cardio", "Bike: 30 min"), mk(-11, "Pull day", "strength", pull),
-    mk(-9, "Push day", "strength", push(130)), mk(-8, "Stretch", "stretch", "Hip stretch: 10 min"), mk(-7, "Legs", "strength", legs), mk(-6, "Easy run", "cardio", "Run: 20 min"),
-    mk(-4, "Pull day", "strength", pull), mk(-3, "Stretch", "stretch", "Chest stretch: 5 min\nHip stretch: 10 min"), mk(-2, "Push day", "strength", push(135)),
+    mk(-30, "Push day", "strength", push(52.5)), mk(-27, "Legs", "strength", legs), mk(-25, "Pull day", "strength", pull), mk(-23, "Easy run", "cardio", "Run: 25 min"),
+    mk(-21, "Push day", "strength", push(55)), mk(-19, "Full-body stretch", "stretch", "Hip stretch: 10 min\nHamstring stretch: 5 min"), mk(-18, "Pull day", "strength", pull),
+    mk(-16, "Legs", "strength", legs), mk(-14, "Push day", "strength", push(57.5)), mk(-13, "Bike", "cardio", "Bike: 30 min"), mk(-11, "Pull day", "strength", pull),
+    mk(-9, "Push day", "strength", push(60)), mk(-8, "Stretch", "stretch", "Hip stretch: 10 min"), mk(-7, "Legs", "strength", legs), mk(-6, "Easy run", "cardio", "Run: 20 min"),
+    mk(-4, "Pull day", "strength", pull), mk(-3, "Stretch", "stretch", "Chest stretch: 5 min\nHip stretch: 10 min"), mk(-2, "Push day", "strength", push(60)),
     mk(-1, "Legs", "strength", legs),
-    { ...mk(0, "Push day", "strength", push(140), false, "claude") },
+    { ...mk(0, "Push day", "strength", push(62.5), false, "claude") },
     mk(0, "Hip and chest stretch", "stretch", "Chest stretch: 5 min\nHip flexor stretch: 5 min", false, "claude"),
     mk(1, "Easy run", "cardio", "Run: 25 min", false, "claude"), mk(2, "Pull day", "strength", pull, false, "claude"),
   ];
@@ -324,7 +324,7 @@ function previewApi() {
   S.profile = { goal: "build muscle", targets: { strength: 4, cardio: 2, stretch: 3 }, notes: "Push / pull / legs. Prefers training after 5pm.", timezone: prof().timezone };
   S.changes = [
     { id: 2, session_id: S.sessions.at(-1).id, action: "add", summary: "Planned “Pull day” for Sat", undone: false, created_at: new Date(Date.now() - 9e5).toISOString() },
-    { id: 1, session_id: today.id, action: "update", summary: "Raised bench press to 140 lb on “Push day”", undone: false, created_at: new Date(Date.now() - 1e6).toISOString(), before: { ...today } },
+    { id: 1, session_id: today.id, action: "update", summary: "Raised bench press to 62.5 kg on “Push day”", undone: false, created_at: new Date(Date.now() - 1e6).toISOString(), before: { ...today } },
   ];
   return {
     async load() {},
@@ -364,7 +364,7 @@ function current() {
   }
   return null;
 }
-function exSummary(e) { return e.sets?.length ? `${e.sets.length} × ${e.sets[0].r}${e.sets[0].w ? " · " + e.sets[0].w + " lb" : ""}` : e.min ? e.min + " min" : e.type; }
+function exSummary(e) { return e.sets?.length ? `${e.sets.length} × ${e.sets[0].r}${e.sets[0].w ? " · " + e.sets[0].w + " kg" : ""}` : e.min ? e.min + " min" : e.type; }
 
 function rings(c, tg) {
   const R = [["strength", 30, "var(--red)"], ["cardio", 21, "var(--blue)"], ["stretch", 12, "var(--teal)"]];
@@ -391,7 +391,7 @@ function viewToday() {
     const { e, si, s } = cur, isSets = e.sets?.length;
     const bar = isSets ? `<div class="setbar">${e.sets.map((x, k) => `<i class="${x.done ? "on" : k === si ? "cur" : ""}"></i>`).join("")}</div>` : "";
     html += `<div class="tile now wide"><span class="lbl">Now · ${esc(s.title)}</span><div class="title">${esc(e.name)}</div>
-      <div class="foot"><div class="mid">${isSets ? `Set ${si + 1} of ${e.sets.length}<div class="small">${e.sets[si].w ? e.sets[si].w + " lb × " : ""}${e.sets[si].r} reps</div>` : `${e.min ? e.min + " min" : "Go"}<div class="small">${e.type}</div>`}</div>
+      <div class="foot"><div class="mid">${isSets ? `Set ${si + 1} of ${e.sets.length}<div class="small">${e.sets[si].w ? e.sets[si].w + " kg × " : ""}${e.sets[si].r} reps</div>` : `${e.min ? e.min + " min" : "Go"}<div class="small">${e.type}</div>`}</div>
       <button class="donebtn" data-act="tick" data-id="${s.id}" data-ei="${cur.ei}" data-si="${isSets ? si : -1}">${isSets ? "Set done" : "Done"}</button></div>${bar}</div>`;
     if (cur.next) html += `<div class="tile next wide"><span class="lbl">Next</span><div class="mid">${esc(cur.next.name)}</div><span class="small">${esc(cur.next.sub)}</span></div>`;
   } else {
@@ -438,11 +438,11 @@ function prChart(name) {
   const best = h.findIndex(x => x.w === max);
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(name)} progress"><polyline fill="none" stroke="var(--blue)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p => p.map(n => n.toFixed(1)).join(",")).join(" ")}"/>
     ${pts.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === best ? 6 : 3}" fill="${i === best ? "var(--red)" : "var(--blue)"}"/>`).join("")}
-    <text x="12" y="${H - 2}" font-size="11" fill="var(--ink-3)">${min} lb</text><text x="${W - 12}" y="12" font-size="11" text-anchor="end" fill="var(--ink-2)" font-weight="700">best ${max} lb</text></svg>`;
+    <text x="12" y="${H - 2}" font-size="11" fill="var(--ink-3)">${min} kg</text><text x="${W - 12}" y="12" font-size="11" text-anchor="end" fill="var(--ink-2)" font-weight="700">best ${max} kg</text></svg>`;
 }
 function heatmap() {
   const t = todayISO(), start = addDays(weekStart(t), -28), byDay = {};
-  for (const s of S.sessions) if (hasActivity(s)) byDay[s.day] = (byDay[s.day] || 0) + (s.kind === "strength" ? 2 : 1) + (volume(s) > 8000 ? 1 : 0);
+  for (const s of S.sessions) if (hasActivity(s)) byDay[s.day] = (byDay[s.day] || 0) + (s.kind === "strength" ? 2 : 1) + (volume(s) > 3600 ? 1 : 0);
   let h = "MTWTFSS".split("").map(d => `<span class="d">${d}</span>`).join("");
   for (let i = 0; i < 35; i++) { const d = addDays(start, i), v = Math.min(4, byDay[d] || 0); h += d > t ? `<span style="background:none"></span>` : `<span class="${v ? "l" + v : ""}${d === t ? " today" : ""}" title="${d}"></span>`; }
   return `<div class="heat">${h}</div>`;
@@ -459,7 +459,7 @@ function viewProgress() {
     <div class="tile"><span class="lbl">Last 5 weeks</span>${heatmap()}</div>
     <div class="tile"><span class="lbl">This week</span><div class="grid" style="grid-template-columns:repeat(3,1fr)">
       <div><div class="stat">${week.length}</div><span class="small">workouts</span></div>
-      <div><div class="stat">${fmtNum(week.reduce((a, s) => a + volume(s), 0))}</div><span class="small">lb lifted</span></div>
+      <div><div class="stat">${fmtNum(week.reduce((a, s) => a + volume(s), 0))}</div><span class="small">kg lifted</span></div>
       <div><div class="stat">${recordsThisWeek()}</div><span class="small">records</span></div></div></div>`;
 }
 
@@ -491,8 +491,8 @@ function drawSheet() {
       <div class="two"><label class="ftile"><span>Day</span><input class="field" type="date" id="fDay" value="${d.day}" required></label>
         <div class="ftile"><span>Status</span><div class="seg">${["planned", "done"].map(k => `<button type="button" data-act="setstatus" data-id="${k}" aria-pressed="${d.status === k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join("")}</div></div></div>
       <div class="ftile"><span>Type</span><div class="seg">${KINDS.map(k => `<button type="button" data-act="setkind" data-id="${k}" aria-pressed="${d.kind === k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join("")}</div></div>
-      <label class="ftile"><span>Exercises, one per line</span><textarea class="field" id="fLines" placeholder="Bench press: 4x8 @135&#10;Overhead press: 3x10 @75&#10;Run: 20 min">${esc(d.lines)}</textarea>
-        <p class="hint">Sets as 4x8, weight after @ (lb), or minutes like 20 min.</p></label>
+      <label class="ftile"><span>Exercises, one per line</span><textarea class="field" id="fLines" placeholder="Bench press: 4x8 @60&#10;Shoulder press: 3x10 @20&#10;Run: 20 min">${esc(d.lines)}</textarea>
+        <p class="hint">Sets as 4x8, weight after @ (kg), or minutes like 20 min.</p></label>
       <label class="ftile"><span>Notes</span><input class="field" id="fNotes" value="${esc(d.notes)}" maxlength="2000"></label>
       <div class="err" id="fErr"></div>
       <div class="btns"><button class="btn primary" type="submit" style="flex:1">Save</button>${d.id ? `<button type="button" class="btn danger" data-act="delete">Delete</button>` : ""}</div>

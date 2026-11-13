@@ -15,8 +15,8 @@ const INSTRUCTIONS = `This connector is the user's workout tracker ("Workout"). 
 How to use it:
 - Call get_training first, every time: it gives today's date, the user's goal, weekly targets (strength / cardio / stretch sessions), notes (injuries, split, preferred times), recent and planned workouts, days since each muscle group was trained, and best lifts.
 - When the user talks about their training plans, change the workout plan directly with add_workouts / update_workouts. Don't just describe a plan; put it in the app.
-- Balance the week against the targets. Don't train a muscle group again within 48 hours of a hard session. Add a short stretch after strength days when stretch is behind target. Progress weights gradually (about 2.5-5% or +5 lb on upper body, +10 lb on lower body when all sets were completed last time).
-- Each strength exercise needs sets, reps and usually a weight in lb. Cardio and stretching use minutes.
+- Balance the week against the targets. Don't train a muscle group again within 48 hours of a hard session. Add a short stretch after strength days when stretch is behind target. Progress weights gradually (+2.5 kg on upper body, +5 kg on lower body when all sets were completed last time; +1-2 kg on dumbbells).
+- Each strength exercise needs sets, reps and usually a weight in kg. Cardio and stretching use minutes.
 - If the Plan connector (the user's day planner) is also available and the user wants workouts on their schedule, add a matching time block there too with Plan's add_tasks, keeping Plan's own rules (call its get_schedule first, avoid fixed blocks).
 - After changing anything, tell the user briefly what changed. Every change is logged in the app with an Undo button.
 - Don't delete workouts the user didn't ask to remove. Mark finished ones done, or skipped if they missed them.`;
@@ -26,7 +26,7 @@ const EX_SCHEMA = { type: "object", additionalProperties: false, required: ["nam
   muscle: { type: "string", enum: MUSCLES, description: "Main muscle group for strength exercises." },
   sets: { type: "integer", minimum: 1, maximum: 12 },
   reps: { type: "integer", minimum: 1, maximum: 100 },
-  weight: { type: ["number", "null"], minimum: 0, maximum: 2000, description: "Pounds per rep, or null for bodyweight." },
+  weight: { type: ["number", "null"], minimum: 0, maximum: 1000, description: "Kilograms per rep (per dumbbell for dumbbell exercises), or null for bodyweight." },
   minutes: { type: "integer", minimum: 1, maximum: 600, description: "For cardio and stretching." },
 } };
 const WK_FIELDS = {
@@ -100,7 +100,7 @@ function toExercises(list, old, where) {
       const n = x.sets ?? 3, r = x.reps ?? 10, wt = x.weight ?? null;
       if (!Number.isInteger(n) || n < 1 || n > 12) fail(`${w}: sets must be 1-12.`);
       if (!Number.isInteger(r) || r < 1 || r > 100) fail(`${w}: reps must be 1-100.`);
-      if (wt !== null && (typeof wt !== "number" || wt < 0 || wt > 2000)) fail(`${w}: weight must be 0-2000 lb or null.`);
+      if (wt !== null && (typeof wt !== "number" || wt < 0 || wt > 1000)) fail(`${w}: weight must be 0-1000 kg or null.`);
       const keep = prev?.sets?.length === n;
       const sets = Array.from({ length: n }, (_, k) => ({ w: wt, r, done: keep ? !!prev.sets[k].done : false }));
       return { name, muscle: x.muscle ?? null, type: "strength", sets, min: null, done: sets.every(s => s.done) };

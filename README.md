@@ -3,7 +3,7 @@
 A phone-first workout tracker, built the same way as Plan: a static page on GitHub Pages, with data in the same Supabase project and the same sign-in. It keeps its data in its own `wk_*` tables.
 
 - **Today:** the set you're on, what's next, your streak, a rest timer, weekly strength/cardio/stretch rings and a suggestion.
-- **Log:** each day's workouts. Tap a set to tick it off. Type exercises one per line, like `Bench press: 4x8 @135` or `Run: 20 min`.
+- **Log:** each day's workouts. Tap a set to tick it off. Type exercises one per line, like `Bench press: 4x8 @60` (kg) or `Run: 20 min`.
 - **Progress:** a muscle recovery map, a personal-record line per lift, a 5-week streak calendar and a weekly recap.
 - **Claude:** chat in the Claude app and Claude plans or changes your workouts directly. Every change shows up here with Undo.
 
@@ -19,7 +19,7 @@ Open `index.html?preview` to try it with sample data. Nothing is saved in previe
 Turn on both Workout and Plan in a chat, and Claude can plan your training and put the sessions on your schedule in one go:
 - "Plan next week: 4 lifting days and 2 runs, around my classes."
 - "My knee hurts, swap Saturday's leg day for upper body."
-- "I did 5x5 squats at 195 today, log it."
+- "I did 5x5 squats at 90 kg today, log it."
 
 ## What Claude can do
 
