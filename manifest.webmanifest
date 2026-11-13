@@ -1,0 +1,11 @@
+{
+  "name": "Workout",
+  "short_name": "Workout",
+  "description": "Log workouts, see recovery and records. Claude can plan your training from the Claude app.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#EEF1F8",
+  "theme_color": "#EEF1F8",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
