@@ -14,7 +14,8 @@ Open `index.html?preview` to try it with sample data. Nothing is saved in previe
 1. **Database:** in Supabase → SQL Editor, run [`setup.sql`](setup.sql). It's safe to run again.
 2. **Host:** push this folder to a new GitHub repository (for example `workout`) and turn on Pages for `main`. Add the address to Supabase → Authentication → URL Configuration → Redirect URLs.
 3. **Connector:** in Supabase → Edge Functions → Deploy a new function → Via editor, name it `workout-mcp`, paste [`supabase/functions/workout-mcp/index.ts`](supabase/functions/workout-mcp/index.ts), deploy, and turn **off** JWT verification in its Details.
-4. **Claude app:** in Workout's Claude tab, create the connector link and copy it. On claude.ai, go to Settings → Connectors → Add custom connector, name it `Workout`, paste the link and choose **No sign-in**.
+4. **Rest alerts (optional):** create a VAPID key pair, add `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` under Edge Functions → Secrets, put the public key in `config.js`, and deploy [`supabase/functions/workout-push/index.ts`](supabase/functions/workout-push/index.ts) as `workout-push` with JWT verification **on**. On iPhone, open Workout from the Home Screen and turn alerts on in the Claude tab.
+5. **Claude app:** in Workout's Claude tab, create the connector link and copy it. On claude.ai, go to Settings → Connectors → Add custom connector, name it `Workout`, paste the link and choose **No sign-in**.
 
 Turn on both Workout and Plan in a chat, and Claude can plan your training and put the sessions on your schedule in one go:
 - "Plan next week: 4 lifting days and 2 runs, around my classes."
@@ -29,6 +30,7 @@ Turn on both Workout and Plan in a chat, and Claude can plan your training and p
 | `add_workouts` | Plans or logs workouts (up to 21 at once) |
 | `update_workouts` | Moves, edits, marks done or skipped |
 | `delete_workouts` | Removes workouts (only when you ask) |
+| `log_run` | Saves run data (distance, time, pace, heart rate, cardio load, zone minutes), e.g. read from a Fitbit screenshot |
 | `set_profile` | Saves your goal, weekly targets and notes (split, injuries, preferred times) |
 
 The connector link works like a password. Turn it off or make a new one in the Claude tab.
