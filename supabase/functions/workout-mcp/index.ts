@@ -18,6 +18,7 @@ How to use it:
 - Balance the week against the targets. Don't train a muscle group again within 48 hours of a hard session. Add a short stretch after strength days when stretch is behind target. Progress weights gradually (+2.5 kg on upper body, +5 kg on lower body when all sets were completed last time; +1-2 kg on dumbbells).
 - Each strength exercise needs sets, reps and usually a weight in kg. Cardio and stretching use minutes.
 - If the Plan connector (the user's day planner) is also available and the user wants workouts on their schedule, add a matching time block there too with Plan's add_tasks, keeping Plan's own rules (call its get_schedule first, avoid fixed blocks).
+- When the user shares a run or cardio screenshot (e.g. Google Fitbit) or run numbers, read the values and save them with log_run: distance, time, pace, average and max heart rate, cardio load and minutes in each heart rate zone. Use the user's own zones from their profile notes when commenting on the run.
 - After changing anything, tell the user briefly what changed. Every change is logged in the app with an Undo button.
 - Don't delete workouts the user didn't ask to remove. Mark finished ones done, or skipped if they missed them.`;
 
@@ -36,6 +37,18 @@ const WK_FIELDS = {
   status: { type: "string", enum: ["planned", "done", "skipped"] },
   exercises: { type: "array", maxItems: 20, items: EX_SCHEMA, description: "Replaces the whole list when updating." },
   notes: { type: "string", maxLength: 2000 },
+};
+
+const RUN_FIELDS = {
+  distance_km: { type: "number", minimum: 0, maximum: 500 },
+  duration_min: { type: "number", minimum: 0, maximum: 1440, description: "Total time in minutes, decimals allowed (30:02 = 30.03)." },
+  pace: { type: "string", description: "Average pace per km as m:ss, e.g. \"5:46\". Computed from distance and time if left out." },
+  avg_hr: { type: "integer", minimum: 30, maximum: 250 },
+  max_hr: { type: "integer", minimum: 30, maximum: 250 },
+  cardio_load: { type: "number", minimum: 0, maximum: 1000, description: "Fitbit cardio load (or similar training load score)." },
+  zones_min: { type: "array", maxItems: 5, items: { type: "number", minimum: 0 }, description: "Minutes in heart rate zones 1 to 5, in order." },
+  calories: { type: "integer", minimum: 0, maximum: 10000 },
+  elevation_m: { type: "number", minimum: 0, maximum: 10000 },
 };
 
 const TOOLS = [
@@ -59,6 +72,16 @@ const TOOLS = [
     description: "Remove workouts by id. Only when the user wants them gone. For missed workouts use update_workouts with status \"skipped\".",
     inputSchema: { type: "object", additionalProperties: false, required: ["ids"], properties: { ids: { type: "array", minItems: 1, maxItems: 21, items: { type: "string" } } } },
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false } },
+  { name: "log_run", title: "Log run data",
+    description: "Save run or cardio data (e.g. read from a Fitbit screenshot) onto a workout and mark it done. Attaches to workout_id if given; otherwise to that day's planned cardio workout; otherwise creates a new cardio workout.",
+    inputSchema: { type: "object", additionalProperties: false, required: ["date"], properties: {
+      date: { type: "string", description: "YYYY-MM-DD the run happened." },
+      workout_id: { type: "string", description: "Optional: the cardio workout to attach to (from get_training)." },
+      name: { type: "string", maxLength: 80, description: "Exercise name if a new workout is created, e.g. \"Run (zone 2)\"." },
+      ...RUN_FIELDS,
+      notes: { type: "string", maxLength: 2000 },
+    } },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false } },
   { name: "set_profile", title: "Update goal and targets",
     description: "Save the user's training goal, weekly session targets, standing notes (split, injuries, equipment, preferred times) or time zone. Notes replace the existing notes, so include anything worth keeping.",
     inputSchema: { type: "object", additionalProperties: false, properties: {
@@ -107,7 +130,7 @@ function toExercises(list, old, where) {
     }
     if (x.minutes !== undefined && (!Number.isInteger(x.minutes) || x.minutes < 1 || x.minutes > 600)) fail(`${w}: minutes must be 1-600.`);
     const type = /stretch|yoga|mobility|foam/i.test(name) ? "stretch" : "cardio";
-    return { name, muscle: null, type, sets: [], min: x.minutes ?? null, done: !!prev?.done && !prev?.sets?.length };
+    return { name, muscle: null, type, sets: [], min: x.minutes ?? null, done: !!prev?.done && !prev?.sets?.length, ...(prev?.stats ? { stats: prev.stats } : {}) };
   });
 }
 function markAll(ex, done) { return ex.map(e => ({ ...e, done, sets: (e.sets || []).map(s => ({ ...s, done })) })); }
@@ -130,8 +153,27 @@ function out(s) {
   return { id: s.id, date: s.day, weekday: weekday(s.day), title: s.title, kind: s.kind, status: s.status,
     exercises: (s.exercises || []).map(e => e.sets?.length
       ? { name: e.name, muscle: e.muscle, sets: e.sets.length, reps: e.sets[0].r, weight: e.sets[0].w, sets_done: e.sets.filter(x => x.done).length }
-      : { name: e.name, minutes: e.min, done: !!e.done }),
+      : { name: e.name, minutes: e.min, done: !!e.done, ...(e.stats ? { run: runOut(e.stats) } : {}) }),
     ...(s.notes ? { notes: s.notes } : {}), added_by: s.source };
+}
+function clock(min) { const t = Math.round(min * 60), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0"); }
+function runOut(st) {
+  return { ...st, ...(st.pace_sec ? { pace: clock(st.pace_sec / 60) + " /km" } : {}), ...(st.duration_min ? { time: clock(st.duration_min) } : {}) };
+}
+function toStats(a, where) {
+  const st = {};
+  const num = (k, lo, hi, int = false) => { if (a[k] === undefined || a[k] === null) return; const v = a[k];
+    if (typeof v !== "number" || isNaN(v) || v < lo || v > hi || (int && !Number.isInteger(v))) fail(`${where}: ${k} must be ${int ? "a whole number" : "a number"} from ${lo} to ${hi}.`); st[k] = v; };
+  num("distance_km", 0, 500); num("duration_min", 0, 1440); num("avg_hr", 30, 250, true); num("max_hr", 30, 250, true);
+  num("cardio_load", 0, 1000); num("calories", 0, 10000, true); num("elevation_m", 0, 10000);
+  if (a.zones_min !== undefined) {
+    if (!Array.isArray(a.zones_min) || a.zones_min.length > 5 || a.zones_min.some(v => typeof v !== "number" || v < 0)) fail(`${where}: zones_min must be up to 5 minute values.`);
+    st.zones = [0, 1, 2, 3, 4].map(i => a.zones_min[i] || 0);
+  }
+  if (a.pace !== undefined) { const m = /^(\d{1,2}):(\d{2})/.exec(String(a.pace)); if (!m) fail(`${where}: pace must look like 5:46.`); st.pace_sec = +m[1] * 60 + +m[2]; }
+  if (st.distance_km && st.duration_min) st.pace_sec = Math.round(st.duration_min * 60 / st.distance_km);
+  if (!Object.keys(st).length) fail(`${where}: give at least one run value (distance_km, duration_min, avg_hr, ...).`);
+  return st;
 }
 function describe(before, after, today) {
   if (before.status !== after.status) return `Marked “${after.title}” ${after.status}`;
@@ -225,6 +267,37 @@ async function callTool(name, args, ctx) {
       removed.push({ id, title: before.title });
     }
     return { removed, ...(missing.length ? { not_found: missing } : {}) };
+  }
+
+  if (name === "log_run") {
+    if (!isDate(args.date)) fail("date must be YYYY-MM-DD.");
+    const st = toStats(args, "log_run");
+    if (args.notes !== undefined && (typeof args.notes !== "string" || args.notes.length > 2000)) fail("notes must be text up to 2000 characters.");
+    let target = null;
+    if (args.workout_id !== undefined) {
+      if (!UUID.test(String(args.workout_id))) fail(`"${args.workout_id}" isn't a workout id.`);
+      target = await store.get(uid, args.workout_id); if (!target) fail("No workout with that id. Call get_training again.");
+    } else {
+      const day = await store.listRange(uid, args.date, args.date);
+      target = day.find(s => s.kind === "cardio" && s.status !== "done" && !(s.exercises || []).some(e => e.stats))
+        || day.find(s => s.kind === "cardio" && !(s.exercises || []).some(e => e.stats)) || null;
+    }
+    const mins = st.duration_min ? Math.round(st.duration_min) : null;
+    if (target) {
+      const ex = structuredClone(target.exercises || []);
+      let i = ex.findIndex(e => !e.sets?.length);
+      if (i < 0) { ex.push({ name: args.name || "Run", muscle: null, type: "cardio", sets: [], min: null, done: false }); i = ex.length - 1; }
+      ex[i] = { ...ex[i], stats: st, done: true, min: mins ?? ex[i].min };
+      const row = { exercises: ex, status: ex.every(exDone) ? "done" : target.status, ...(args.notes !== undefined ? { notes: args.notes } : {}) };
+      const after = await store.update(uid, target.id, row);
+      await store.logChange(uid, { session_id: target.id, action: "update", before: target, after, summary: `Logged run data on “${after.title}”${st.distance_km ? ` (${st.distance_km} km)` : ""}` });
+      return { logged_on: out(after) };
+    }
+    const name0 = (typeof args.name === "string" && args.name.trim()) || "Run";
+    const s = await store.insert(uid, { day: args.date, title: name0, kind: "cardio", status: "done", notes: args.notes || "",
+      exercises: [{ name: name0, muscle: null, type: "cardio", sets: [], min: mins, done: true, stats: st }] });
+    await store.logChange(uid, { session_id: s.id, action: "add", before: null, after: s, summary: `Logged “${s.title}” ${dayWords(s.day, today)}${st.distance_km ? ` (${st.distance_km} km)` : ""}` });
+    return { created: out(s) };
   }
 
   if (name === "set_profile") {

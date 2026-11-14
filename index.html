@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#EEF1F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B1020" media="(prefers-color-scheme: dark)">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
@@ -128,6 +128,15 @@ textarea.field { padding: 10px 12px; min-height: 140px; resize: vertical; line-h
 .auth-card h2 { margin: 4px 0 0; font-size: 24px; font-weight: 800; }
 .auth-card p { margin: 0; color: var(--ink-2); font-size: 14px; }
 .auth-card .field, .auth-card .btn { width: 100%; }
+.alert { position: fixed; left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top, 0px)); z-index: 70; max-width: 520px; margin: 0 auto; background: var(--red); color: var(--on-red); border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: center; box-shadow: 0 12px 30px -10px rgba(0,0,0,.45); animation: drop .3s ease-out; }
+.alert b { font-size: 17px; display: block; } .alert span { font-size: 13px; opacity: .9; }
+.alert button { margin-left: auto; border: 0; background: rgba(255,255,255,.2); color: inherit; border-radius: 10px; min-height: 36px; padding: 0 12px; font-weight: 700; }
+@keyframes drop { from { transform: translateY(-120%); } }
+.run { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; margin-top: 4px; }
+.run div small { display: block; font-size: 11px; color: var(--ink-2); font-weight: 600; }
+.run div b { font-size: 16px; font-weight: 800; }
+.zbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--tile-2); margin-top: 6px; }
+.zbar i { display: block; height: 100%; }
 .toast { position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; background: var(--ink); color: var(--page); padding: 10px 16px; border-radius: 14px; font-weight: 700; font-size: 14px; }
 </style>
 </head>
@@ -152,6 +161,7 @@ textarea.field { padding: 10px 12px; min-height: 140px; resize: vertical; line-h
 <div id="sheetRoot"></div>
 <div id="authRoot"></div>
 <div id="toastRoot"></div>
+<div id="alertRoot"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
@@ -177,6 +187,25 @@ function ago(ts) { const s = (Date.now() - new Date(ts)) / 1000; return s < 60 ?
 function toast(m) { const r = document.getElementById("toastRoot"); r.innerHTML = `<div class="toast" role="status">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => r.innerHTML = "", 2600); }
 function prof() { return S.profile || { goal: "general fitness", targets: { strength: 4, cardio: 2, stretch: 3 }, notes: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }; }
 function fmtNum(n) { return Math.round(n).toLocaleString("en-US"); }
+function fmtClock(min) { const t = Math.round(min * 60), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(sec).padStart(2, "0"); }
+function parseClock(v) { v = String(v ?? "").trim(); if (!v) return null; if (v.includes(":")) { const p = v.split(":").map(Number); if (p.some(isNaN)) return null; return p.length === 3 ? p[0] * 60 + p[1] + p[2] / 60 : p[0] + p[1] / 60; } const n = parseFloat(v); return isNaN(n) ? null : n; }
+const ZONE_COLORS = ["#85B7EB", "#378ADD", "#EF9F27", "#E24B4A", "#791F1F"];
+
+// Sound and alert banner for "rest's over". iPhones only play sound after a tap, so the first tap unlocks audio.
+let actx = null;
+function unlockAudio() { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); } catch {} }
+function beep() {
+  try { unlockAudio(); const t = actx.currentTime;
+    for (const [at, f] of [[0, 880], [0.28, 880], [0.56, 1175]]) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(0.0001, t + at); g.gain.exponentialRampToValueAtTime(0.35, t + at + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.22); o.start(t + at); o.stop(t + at + 0.24); }
+  } catch {}
+  try { navigator.vibrate?.([200, 100, 200]); } catch {}
+}
+function showAlert(title, msg) {
+  const r = document.getElementById("alertRoot");
+  r.innerHTML = `<div class="alert" role="alert"><div><b>${esc(title)}</b><span>${esc(msg || "")}</span></div><button data-act="closealert">OK</button></div>`;
+  clearTimeout(showAlert.t); showAlert.t = setTimeout(() => r.innerHTML = "", 12000);
+}
 
 // Guess the muscle group from an exercise name. Order matters ("leg press" before "press").
 const MUSCLE_WORDS = [
@@ -205,7 +234,7 @@ function parseLines(text, old = []) {
       const sets = Array.from({ length: n }, (_, k) => ({ w, r, done: !!prev?.sets?.[k]?.done }));
       return { name, muscle, type: "strength", sets, min: null, done: sets.every(s => s.done) };
     }
-    return { name, muscle, type: type === "strength" && minM ? "cardio" : type, sets: [], min: minM ? +minM[1] : null, done: !!prev?.done };
+    return { name, muscle, type: type === "strength" && minM ? "cardio" : type, sets: [], min: minM ? +minM[1] : null, done: !!prev?.done, ...(prev?.stats ? { stats: prev.stats } : {}) };
   });
 }
 function toLines(ex) {
@@ -319,6 +348,7 @@ function previewApi() {
     mk(0, "Hip and chest stretch", "stretch", "Chest stretch: 5 min\nHip flexor stretch: 5 min", false, "claude"),
     mk(1, "Easy run", "cardio", "Run: 25 min", false, "claude"), mk(2, "Pull day", "strength", pull, false, "claude"),
   ];
+  let k = 0; for (const s of S.sessions) if (s.status === "done" && /run/i.test(s.title)) { const e = s.exercises[0], km = +(e.min / (6.1 - k * 0.08)).toFixed(1); e.stats = cleanRun({ distance_km: km, duration_min: e.min, avg_hr: 146 - (k % 2), max_hr: 158, cardio_load: Math.round(e.min * 1.4), zones: [3, e.min - 6, 3, 0, 0] }); k++; }
   const today = S.sessions.find(s => s.day === t && s.kind === "strength");
   today.exercises[0].sets[0].done = true; today.exercises[0].sets[1].done = true;
   S.profile = { goal: "build muscle", targets: { strength: 4, cardio: 2, stretch: 3 }, notes: "Push / pull / legs. Prefers training after 5pm.", timezone: prof().timezone };
@@ -407,10 +437,28 @@ function viewToday() {
   return html;
 }
 
+function runCard(st) {
+  const items = [["Distance", st.distance_km != null ? st.distance_km + " km" : null], ["Pace", st.pace_sec ? fmtClock(st.pace_sec / 60) + " /km" : null],
+    ["Time", st.duration_min ? fmtClock(st.duration_min) : null], ["Avg HR", st.avg_hr], ["Max HR", st.max_hr], ["Cardio load", st.cardio_load],
+    ["Calories", st.calories], ["Elevation", st.elevation_m != null ? st.elevation_m + " m" : null]].filter(x => x[1] != null && x[1] !== "");
+  const z = st.zones || [], tot = z.reduce((a, b) => a + (b || 0), 0);
+  const zones = tot ? `<div class="zbar">${z.map((m, i) => m ? `<i style="flex:${m};background:${ZONE_COLORS[i]}"></i>` : "").join("")}</div>
+    <span class="small">${z.map((m, i) => m ? `Z${i + 1} ${Math.round(m)} min` : "").filter(Boolean).join(" · ")}</span>` : "";
+  return `<div class="run">${items.map(([k, v]) => `<div><small>${k}</small><b>${esc(v)}</b></div>`).join("")}</div>${zones}`;
+}
+function cleanRun(r) {
+  if (!r) return null;
+  const num = v => (v === "" || v == null || isNaN(+v)) ? null : +v;
+  const st = { distance_km: num(r.distance_km), duration_min: r.duration_min ?? null, avg_hr: num(r.avg_hr), max_hr: num(r.max_hr), cardio_load: num(r.cardio_load), calories: num(r.calories), elevation_m: num(r.elevation_m) };
+  const z = (r.zones || []).map(num); if (z.some(v => v)) st.zones = z.map(v => v || 0);
+  if (st.distance_km && st.duration_min) st.pace_sec = Math.round(st.duration_min * 60 / st.distance_km); else if (r.pace_sec) st.pace_sec = r.pace_sec;
+  for (const k of Object.keys(st)) if (st[k] == null) delete st[k];
+  return Object.keys(st).length ? st : null;
+}
 function sessionCard(s) {
   const ex = s.exercises.map((e, ei) => `<div class="ex"><div class="exh"><b>${esc(e.name)}</b><span class="small">${esc(exSummary(e))}${e.muscle ? " · " + e.muscle : ""}</span></div>
     <div class="sets">${e.sets?.length ? e.sets.map((x, si) => `<button class="set" data-act="tick" data-id="${s.id}" data-ei="${ei}" data-si="${si}" aria-pressed="${!!x.done}">${x.w ? x.w + "×" : ""}${x.r}</button>`).join("")
-      : `<button class="set" data-act="tick" data-id="${s.id}" data-ei="${ei}" data-si="-1" aria-pressed="${!!e.done}">${e.done ? "Done" : "Mark done"}</button>`}</div></div>`).join("");
+      : `<button class="set" data-act="tick" data-id="${s.id}" data-ei="${ei}" data-si="-1" aria-pressed="${!!e.done}">${e.done ? "Done" : "Mark done"}</button>`}</div>${e.stats ? runCard(e.stats) : ""}</div>`).join("");
   return `<div class="tile"><div class="shead"><div><div class="mid">${esc(s.title)}</div><div style="display:flex;gap:6px;margin-top:2px"><span class="tag">${s.kind}</span>${s.status === "done" ? `<span class="tag done">done</span>` : s.status === "skipped" ? `<span class="tag">skipped</span>` : ""}${s.source === "claude" ? `<span class="tag ai">Claude</span>` : ""}</div></div>
     <button class="mini ghost" data-act="edit" data-id="${s.id}">Edit</button></div>
     <div class="rows">${ex || `<p class="empty">No exercises yet.</p>`}</div>${s.notes ? `<p class="hint">${esc(s.notes)}</p>` : ""}</div>`;
@@ -447,6 +495,21 @@ function heatmap() {
   for (let i = 0; i < 35; i++) { const d = addDays(start, i), v = Math.min(4, byDay[d] || 0); h += d > t ? `<span style="background:none"></span>` : `<span class="${v ? "l" + v : ""}${d === t ? " today" : ""}" title="${d}"></span>`; }
   return `<div class="heat">${h}</div>`;
 }
+function runs() {
+  const out = [];
+  for (const s of [...S.sessions].sort((a, b) => a.day.localeCompare(b.day))) for (const e of s.exercises) if (e.stats?.pace_sec && /run|jog/i.test(e.name + " " + s.title)) out.push({ day: s.day, ...e.stats });
+  return out;
+}
+function paceChart() {
+  const z2 = runs().filter(r => r.avg_hr >= 140 && r.avg_hr <= 155).slice(-12);
+  if (z2.length < 2) return `<p class="empty">Log two or more zone 2 runs (average heart rate 140–155) to see whether you're getting faster at the same effort.</p>`;
+  const W = 300, H = 110, ps = z2.map(r => r.pace_sec), slow = Math.max(...ps), fast = Math.min(...ps), sp = Math.max(1, slow - fast);
+  const pts = z2.map((r, i) => [12 + i * (W - 24) / (z2.length - 1), 14 + (r.pace_sec - fast) / sp * (H - 34)]);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Zone 2 pace over time"><polyline fill="none" stroke="var(--blue)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p => p.map(n => n.toFixed(1)).join(",")).join(" ")}"/>
+    ${pts.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === pts.length - 1 ? 6 : 3}" fill="${i === pts.length - 1 ? "var(--red)" : "var(--blue)"}"/>`).join("")}
+    <text x="12" y="${H - 2}" font-size="11" fill="var(--ink-3)">slowest ${fmtClock(slow / 60)} /km</text><text x="${W - 12}" y="10" font-size="11" text-anchor="end" fill="var(--ink-2)" font-weight="700">fastest ${fmtClock(fast / 60)} /km</text></svg>
+    <span class="small">Higher is faster. Faster at the same heart rate means your fitness is improving.</span>`;
+}
 function viewProgress() {
   const r = recovery(), lifts = liftNames();
   if (!S.prEx || !lifts.includes(S.prEx)) S.prEx = lifts.find(n => /bench/i.test(n)) || lifts[0] || null;
@@ -456,13 +519,22 @@ function viewProgress() {
   return `<div class="tile"><span class="lbl">Muscle recovery</span><div style="display:flex;gap:18px;align-items:center">${bodyMap(r)}<div style="display:grid;gap:6px;flex:1;font-size:14px">${list}</div></div>${legend}</div>
     <div class="tile"><div class="shead"><span class="lbl">Personal records</span>${lifts.length ? `<select class="field" id="prSel" style="width:auto;min-height:36px;font-size:14px">${lifts.map(n => `<option ${n === S.prEx ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>` : ""}</div>
       ${S.prEx ? prChart(S.prEx) : `<p class="empty">Log a lift with weights to see records here.</p>`}</div>
+    <div class="tile"><span class="lbl">Zone 2 pace</span>${paceChart()}</div>
     <div class="tile"><span class="lbl">Last 5 weeks</span>${heatmap()}</div>
     <div class="tile"><span class="lbl">This week</span><div class="grid" style="grid-template-columns:repeat(3,1fr)">
       <div><div class="stat">${week.length}</div><span class="small">workouts</span></div>
       <div><div class="stat">${fmtNum(week.reduce((a, s) => a + volume(s), 0))}</div><span class="small">kg lifted</span></div>
-      <div><div class="stat">${recordsThisWeek()}</div><span class="small">records</span></div></div></div>`;
+      <div><div class="stat">${recordsThisWeek()}</div><span class="small">records</span></div>
+      <div><div class="stat">${(Math.round(runs().filter(r => r.day >= ws).reduce((a, r) => a + (r.distance_km || 0), 0) * 10) / 10)}</div><span class="small">km run</span></div>
+      <div><div class="stat">${fmtNum(S.sessions.filter(s => s.day >= ws).flatMap(s => s.exercises).reduce((a, e) => a + (e.stats?.cardio_load || 0), 0))}</div><span class="small">cardio load</span></div></div></div>`;
 }
 
+function pushTile() {
+  if (S.mode !== "live") return `<p class="hint">Sign in to turn on lock-screen alerts. In the app, rest timers always beep and show a banner.</p>`;
+  if (!pushSupported()) return `<p class="hint">On iPhone, add Workout to your Home Screen (Safari → Share → Add to Home Screen), then open it from there to turn this on.</p>`;
+  return S.pushOn ? `<p class="hint">On. When a rest timer ends, you get a notification even with your phone locked.</p><div class="btns"><button class="mini ghost" data-act="pushtest">Send a test</button><button class="mini ghost" data-act="pushoff">Turn off</button></div>`
+    : `<p class="hint">Get a “Rest's over” notification when your phone is locked or in your pocket.</p><div class="btns"><button class="mini" data-act="pushon">Turn on</button></div>`;
+}
 function viewClaude() {
   const p = prof(), tg = p.targets || {};
   const changes = S.changes.length ? S.changes.map(c => `<div class="chg ${c.undone ? "undone" : ""}"><div class="name">${esc(c.summary)}</div><div class="sub">${ago(c.created_at)}</div>
@@ -472,6 +544,7 @@ function viewClaude() {
     : `<div class="btns"><button class="mini" data-act="mklink">Create connector link</button></div>`;
   return `<div class="tile"><span class="lbl">How it works</span><p class="small" style="margin:0">Add this app as a connector called “Workout” on claude.ai (Settings → Connectors → Add custom connector, choose No sign-in). Then talk about your training in any chat. With the Plan connector on too, Claude can put workouts on your schedule.</p>
       <p class="hint">Try: “Plan my next week, 4 lifting days and 2 runs, around my classes.” · “My knee hurts, swap leg day for upper body.” · “What should I do today?”</p></div>
+    <div class="tile"><span class="lbl">Rest alerts on your lock screen</span>${pushTile()}</div>
     <div class="tile"><span class="lbl">Connector link</span>${link}</div>
     <div class="tile"><span class="lbl">Changes by Claude</span><div class="rows">${changes}</div></div>
     <div class="tile"><span class="lbl">Goal and weekly targets</span><p class="small" style="margin:0">${esc(p.goal)} · ${tg.strength || 0} strength, ${tg.cardio || 0} cardio, ${tg.stretch || 0} stretch</p>${p.notes ? `<p class="hint">${esc(p.notes)}</p>` : ""}<button class="link" data-act="editprof">Edit</button></div>
@@ -479,6 +552,16 @@ function viewClaude() {
 }
 
 /* ---------- sheets ---------- */
+function runFields(r) {
+  const f = (id, label, val, mode = "decimal", ph = "") => `<label class="small">${label}<input class="field" id="${id}" inputmode="${mode}" value="${esc(val ?? "")}" placeholder="${ph}"></label>`;
+  const z = r.zones || [];
+  return `<div class="ftile"><span>Run data (optional, from Fitbit)</span>
+    <div class="two" style="grid-template-columns:repeat(3,minmax(0,1fr))">${f("rDist", "Distance km", r.distance_km, "decimal", "5.2")}${f("rTime", "Time", r.duration_min ? fmtClock(r.duration_min) : "", "text", "30:02")}${f("rAvg", "Avg HR", r.avg_hr, "numeric", "146")}
+      ${f("rMax", "Max HR", r.max_hr, "numeric", "158")}${f("rLoad", "Cardio load", r.cardio_load, "numeric", "48")}${f("rKcal", "Calories", r.calories, "numeric", "")}</div>
+    <span>Minutes in each zone</span>
+    <div class="two" style="grid-template-columns:repeat(5,minmax(0,1fr))">${[0, 1, 2, 3, 4].map(i => f("rZ" + i, "Z" + (i + 1), z[i] || "", "numeric")).join("")}</div>
+    <p class="hint">Or send your Fitbit screenshot to Claude and say “log this run”.</p></div>`;
+}
 function openSheet(sh) { S.sheet = sh; drawSheet(); }
 function closeSheet() { S.sheet = null; document.getElementById("sheetRoot").innerHTML = ""; render(); }
 function drawSheet() {
@@ -493,6 +576,7 @@ function drawSheet() {
       <div class="ftile"><span>Type</span><div class="seg">${KINDS.map(k => `<button type="button" data-act="setkind" data-id="${k}" aria-pressed="${d.kind === k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join("")}</div></div>
       <label class="ftile"><span>Exercises, one per line</span><textarea class="field" id="fLines" placeholder="Bench press: 4x8 @60&#10;Shoulder press: 3x10 @20&#10;Run: 20 min">${esc(d.lines)}</textarea>
         <p class="hint">Sets as 4x8, weight after @ (kg), or minutes like 20 min.</p></label>
+      ${d.kind === "cardio" ? runFields(d.run || {}) : ""}
       <label class="ftile"><span>Notes</span><input class="field" id="fNotes" value="${esc(d.notes)}" maxlength="2000"></label>
       <div class="err" id="fErr"></div>
       <div class="btns"><button class="btn primary" type="submit" style="flex:1">Save</button>${d.id ? `<button type="button" class="btn danger" data-act="delete">Delete</button>` : ""}</div>
@@ -507,19 +591,70 @@ function drawSheet() {
       <button class="btn primary" type="submit">Save</button></form></div>`;
   }
 }
-function readDraft() { const d = S.sheet?.draft; if (!d || S.sheet.type !== "session") return; d.title = document.getElementById("fTitle").value; d.day = document.getElementById("fDay").value; d.lines = document.getElementById("fLines").value; d.notes = document.getElementById("fNotes").value; }
+function readDraft() {
+  const d = S.sheet?.draft; if (!d || S.sheet.type !== "session") return;
+  const v = id => document.getElementById(id)?.value.trim();
+  d.title = v("fTitle"); d.day = v("fDay"); d.lines = document.getElementById("fLines").value; d.notes = v("fNotes");
+  if (document.getElementById("rDist")) { d.runShown = true; d.run = { distance_km: v("rDist"), duration_min: parseClock(v("rTime")), avg_hr: v("rAvg"), max_hr: v("rMax"), cardio_load: v("rLoad"), calories: v("rKcal"), zones: [0, 1, 2, 3, 4].map(i => v("rZ" + i)), pace_sec: d.run?.pace_sec, elevation_m: d.run?.elevation_m }; }
+}
 
 /* ---------- actions ---------- */
 async function tick(id, ei, si) {
+  unlockAudio();
   const s = S.sessions.find(x => x.id === id); if (!s) return;
   const copy = structuredClone(s), e = copy.exercises[ei];
-  if (si >= 0) { e.sets[si].done = !e.sets[si].done; e.done = e.sets.every(x => x.done); if (e.sets[si].done) S.restEnd = Date.now() + REST_SEC * 1000; }
+  if (si >= 0) { e.sets[si].done = !e.sets[si].done; e.done = e.sets.every(x => x.done); }
   else e.done = !e.done;
   copy.status = copy.exercises.length && copy.exercises.every(exDone) ? "done" : copy.status === "done" ? "planned" : copy.status;
-  upsertLocal(copy); render();
+  upsertLocal(copy);
+  if (si >= 0 && e.sets[si].done) {
+    const nx = nextUp();
+    if (copy.status !== "done") startRest(nx);
+    else { stopRest(); if (nx) showAlert("Next up", nx); }
+  }
+  render();
   if (copy.status === "done" && s.status !== "done") toast("Workout done");
   try { await api.saveSession(copy); } catch (err) { upsertLocal(s); render(); toast("Couldn't save: " + err.message); }
 }
+
+// What to do next, in words: the next set, or the next workout (e.g. the cardio after lifting).
+function nextUp() {
+  const cur = current(); if (!cur) return "";
+  if (cur.si >= 0) { const x = cur.e.sets[cur.si]; return `${cur.e.name} · set ${cur.si + 1} of ${cur.e.sets.length}${x.w ? ` · ${x.w} kg × ${x.r}` : ` × ${x.r}`}`; }
+  const zone = /zone 2/i.test(cur.s.title + cur.e.name) ? " · zone 2, 140–155 bpm" : "";
+  return `${cur.s.title === cur.e.name ? cur.e.name : cur.s.title + ": " + cur.e.name}${cur.e.min ? " · " + cur.e.min + " min" : ""}${zone}`;
+}
+function startRest(msg) { S.restEnd = Date.now() + REST_SEC * 1000; S.restMsg = msg; schedulePush(msg); }
+function stopRest() { const was = S.restEnd; S.restEnd = 0; if (was) cancelPush(); }
+
+/* ---------- lock-screen notifications (Web Push) ---------- */
+function b64u(s) { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(b, c => c.charCodeAt(0)); }
+function pushSupported() { return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+async function checkPush() {
+  try { const reg = await navigator.serviceWorker.getRegistration(); const sub = await reg?.pushManager.getSubscription(); S.pushOn = !!sub && Notification.permission === "granted"; } catch { S.pushOn = false; }
+}
+async function enablePush() {
+  const key = window.WK_CONFIG?.vapidPublicKey; if (!key) throw new Error("notifications aren't set up yet");
+  const reg = await navigator.serviceWorker.register("sw.js"); await navigator.serviceWorker.ready;
+  if (await Notification.requestPermission() !== "granted") throw new Error("notifications are blocked. Allow them in Settings → Notifications → Workout");
+  const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(key) });
+  const { error } = await sb.from("wk_push").upsert({ endpoint: sub.endpoint, sub: sub.toJSON() }); if (error) throw error;
+  S.pushOn = true;
+}
+async function disablePush() {
+  const reg = await navigator.serviceWorker.getRegistration(), sub = await reg?.pushManager.getSubscription();
+  if (sub) { await sb.from("wk_push").delete().eq("endpoint", sub.endpoint); await sub.unsubscribe(); }
+  S.pushOn = false;
+}
+async function schedulePush(msg) {
+  if (S.mode !== "live" || !S.pushOn) return;
+  try {
+    const token = crypto.randomUUID();
+    const { error } = await sb.from("wk_rest").upsert({ user_id: uid, token }); if (error) throw error;
+    await sb.functions.invoke("workout-push", { body: { delay: REST_SEC, token, title: "Rest's over", body: msg } });
+  } catch (err) { console.warn("push schedule failed", err); }
+}
+async function cancelPush() { if (S.mode === "live" && S.pushOn) try { await sb.from("wk_rest").delete().eq("user_id", uid); } catch {} }
 
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-act],[data-tab]"); if (!b) return;
@@ -529,10 +664,14 @@ document.addEventListener("click", async e => {
     if (a === "tick") tick(id, +b.dataset.ei, +b.dataset.si);
     else if (a === "shiftday") { S.day = addDays(S.day, +b.dataset.n); S.logTouched = true; render(); }
     else if (a === "gotoday") { S.day = todayISO(); render(); }
-    else if (a === "reston") { S.restEnd = Date.now() + REST_SEC * 1000; render(); }
-    else if (a === "restoff") { S.restEnd = 0; render(); }
+    else if (a === "reston") { unlockAudio(); startRest(nextUp()); render(); }
+    else if (a === "restoff") { stopRest(); render(); }
+    else if (a === "closealert") document.getElementById("alertRoot").innerHTML = "";
+    else if (a === "pushon") { unlockAudio(); await enablePush(); render(); toast("Rest alerts on"); }
+    else if (a === "pushoff") { await disablePush(); render(); toast("Rest alerts off"); }
+    else if (a === "pushtest") { unlockAudio(); startRest("This is a test. Lock your phone to see the notification."); S.restEnd = Date.now() + 10000; await cancelPush(); if (S.pushOn) { const token = crypto.randomUUID(); await sb.from("wk_rest").upsert({ user_id: uid, token }); await sb.functions.invoke("workout-push", { body: { delay: 10, token, title: "Rest's over", body: "Test alert. It works." } }); } render(); toast("Test alert in 10 seconds"); }
     else if (a === "add") openSheet({ type: "session", draft: { title: "", day: S.tab === "log" ? S.day : todayISO(), kind: "strength", status: "planned", lines: "", notes: "" } });
-    else if (a === "edit") { const s = S.sessions.find(x => x.id === id); openSheet({ type: "session", orig: s, draft: { ...s, lines: toLines(s.exercises) } }); }
+    else if (a === "edit") { const s = S.sessions.find(x => x.id === id); openSheet({ type: "session", orig: s, draft: { ...s, lines: toLines(s.exercises), run: s.exercises.find(x => x.stats)?.stats || {} } }); }
     else if (a === "close") { if (e.target === b || b.tagName === "BUTTON") closeSheet(); }
     else if (a === "setkind" || a === "setstatus") { readDraft(); S.sheet.draft[a === "setkind" ? "kind" : "status"] = id; drawSheet(); }
     else if (a === "delete") { if (!confirm("Delete this workout?")) return; await api.deleteSession(S.sheet.draft.id); closeSheet(); toast("Workout deleted"); }
@@ -553,6 +692,13 @@ document.addEventListener("submit", async e => {
     if (!d.day) { err.textContent = "Pick a day."; return; }
     let ex = parseLines(d.lines, S.sheet.orig?.exercises || []);
     if (d.status === "done") ex = ex.map(x => ({ ...x, done: true, sets: x.sets.map(s => ({ ...s, done: true })) }));
+    if (d.runShown) {
+      const st = cleanRun(d.run);
+      if (st) { let i = ex.findIndex(x => x.type !== "strength"); if (i < 0) { ex.push({ name: "Run", muscle: null, type: "cardio", sets: [], min: null, done: false }); i = ex.length - 1; }
+        ex[i] = { ...ex[i], stats: st, done: true, min: st.duration_min ? Math.round(st.duration_min) : ex[i].min }; }
+      else ex = ex.map(x => { const { stats, ...rest } = x; return rest; });
+      if (ex.length && ex.every(exDone)) d.status = "done";
+    }
     try { await api.saveSession({ id: d.id, day: d.day, title: d.title.trim(), kind: d.kind, status: d.status, exercises: ex, notes: d.notes.trim(), source: d.source, created_at: d.created_at }); S.day = d.day; closeSheet(); toast("Saved"); }
     catch (x) { err.textContent = "Couldn't save: " + x.message; }
   } else if (e.target.id === "profForm") {
@@ -592,10 +738,10 @@ async function startLive(user) {
 function startPreview() { api = previewApi(); S.mode = "preview"; render(); }
 // Tick the rest timer without redrawing the whole page.
 setInterval(() => {
-  const el = document.getElementById("restTimer"); if (!el || !S.restEnd) return;
+  if (!S.restEnd) return; const el = document.getElementById("restTimer");
   const left = Math.ceil((S.restEnd - Date.now()) / 1000);
-  if (left <= 0) { S.restEnd = 0; if (navigator.vibrate) navigator.vibrate(200); toast("Rest's over"); if (!S.sheet) render(); }
-  else el.textContent = Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+  if (left <= 0) { S.restEnd = 0; beep(); showAlert("Rest's over", S.restMsg || nextUp()); if (!S.sheet) render(); }
+  else if (el) el.textContent = Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
 }, 1000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.mode === "live") scheduleReload(); });
 
@@ -605,6 +751,7 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
   if (new URLSearchParams(location.search).has("preview") || !cfg.supabaseUrl || !window.supabase) return startPreview();
   sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true } });
   const { data } = await sb.auth.getSession();
+  if (pushSupported()) { navigator.serviceWorker.register("sw.js").catch(() => {}); await checkPush(); }
   if (data.session) startLive(data.session.user); else { startPreview(); showAuth(); }
 })();
 </script>

@@ -73,3 +73,24 @@ do $$ begin
   begin alter publication supabase_realtime add table public.wk_sessions; exception when duplicate_object then null; end;
   begin alter publication supabase_realtime add table public.wk_changes;  exception when duplicate_object then null; end;
 end $$;
+
+-- ===== Rest alerts on the lock screen (added Nov 2026) =====
+-- Each device that turned on notifications (a Web Push subscription).
+create table if not exists public.wk_push (
+  endpoint   text        primary key,
+  user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
+  sub        jsonb       not null,
+  created_at timestamptz not null default now()
+);
+-- The rest timer that's running now. The push function only sends if the token still matches (skipping the rest deletes it).
+create table if not exists public.wk_rest (
+  user_id    uuid        primary key default auth.uid() references auth.users (id) on delete cascade,
+  token      uuid        not null,
+  created_at timestamptz not null default now()
+);
+alter table public.wk_push enable row level security;
+alter table public.wk_rest enable row level security;
+drop policy if exists "Own rows only" on public.wk_push;
+create policy "Own rows only" on public.wk_push for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "Own rows only" on public.wk_rest;
+create policy "Own rows only" on public.wk_rest for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

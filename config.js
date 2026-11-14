@@ -3,4 +3,6 @@
 window.WK_CONFIG = {
   supabaseUrl: "https://yjzlpgiklxrnimqzdbjt.supabase.co",
   supabaseAnonKey: "sb_publishable_kGyOVxrlssDSx1UuzPAYZg_keW59ehn",
+  // Public half of the Web Push key pair (the private half is the VAPID_PRIVATE_KEY secret on the workout-push function).
+  vapidPublicKey: "BCpP6zwkvPz-vPqieyf6hIaET3yckXzOMGeJCSohaJ20oVSebQwwG8KROsNBgQZ4yb75FmGcDmk2yN0j77J9Xu8",
 };
