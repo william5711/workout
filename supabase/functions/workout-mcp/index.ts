@@ -19,6 +19,8 @@ How to use it:
 - Each strength exercise needs sets, reps and usually a weight in kg. Cardio and stretching use minutes.
 - If the Plan connector (the user's day planner) is also available and the user wants workouts on their schedule, add a matching time block there too with Plan's add_tasks, keeping Plan's own rules (call its get_schedule first, avoid fixed blocks).
 - When the user shares a run or cardio screenshot (e.g. Google Fitbit) or run numbers, read the values and save them with log_run: distance, time, pace, average and max heart rate, cardio load and minutes in each heart rate zone. Use the user's own zones from their profile notes when commenting on the run.
+- Recovery check: when the user mentions their morning resting heart rate or HRV, save it with log_readiness. get_training returns their baselines, recent readings and today's readiness level ("ok", "easy" or "rest"). On an "easy" day cut a set per exercise and keep cardio short and easy; on a "rest" day suggest resting. Save their normal numbers with set_profile (baseline_resting_hr, baseline_hrv).
+- done_sets on an exercise lists what the user actually lifted (weight x reps per set); use it, not the plan, when deciding the next weights.
 - After changing anything, tell the user briefly what changed. Every change is logged in the app with an Undo button.
 - Don't delete workouts the user didn't ask to remove. Mark finished ones done, or skipped if they missed them.`;
 
@@ -82,12 +84,21 @@ const TOOLS = [
       notes: { type: "string", maxLength: 2000 },
     } },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false } },
+  { name: "log_readiness", title: "Log morning recovery numbers",
+    description: "Save the user's morning resting heart rate and/or HRV for a day (default today). Returns the readiness level against their baselines.",
+    inputSchema: { type: "object", additionalProperties: false, properties: {
+      date: { type: "string", description: "YYYY-MM-DD. Defaults to today." },
+      resting_hr: { type: "integer", minimum: 25, maximum: 150 },
+      hrv: { type: "integer", minimum: 5, maximum: 300, description: "In ms, from the user's main device." },
+    } }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
   { name: "set_profile", title: "Update goal and targets",
     description: "Save the user's training goal, weekly session targets, standing notes (split, injuries, equipment, preferred times) or time zone. Notes replace the existing notes, so include anything worth keeping.",
     inputSchema: { type: "object", additionalProperties: false, properties: {
       goal: { type: "string", maxLength: 200, description: "e.g. \"build muscle\", \"lose fat\", \"run a 10k\"." },
       targets: { type: "object", additionalProperties: false, properties: Object.fromEntries(KINDS.map(k => [k, { type: "integer", minimum: 0, maximum: 14 }])), description: "Sessions per week by kind." },
       notes: { type: "string", maxLength: 2000 },
+      baseline_resting_hr: { type: "integer", minimum: 25, maximum: 120, description: "The user's normal morning resting heart rate." },
+      baseline_hrv: { type: "integer", minimum: 5, maximum: 300, description: "The user's normal HRV." },
       timezone: { type: "string", description: "IANA name, e.g. America/Los_Angeles." },
     } }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
 ];
@@ -125,7 +136,7 @@ function toExercises(list, old, where) {
       if (!Number.isInteger(r) || r < 1 || r > 100) fail(`${w}: reps must be 1-100.`);
       if (wt !== null && (typeof wt !== "number" || wt < 0 || wt > 1000)) fail(`${w}: weight must be 0-1000 kg or null.`);
       const keep = prev?.sets?.length === n;
-      const sets = Array.from({ length: n }, (_, k) => ({ w: wt, r, done: keep ? !!prev.sets[k].done : false }));
+      const sets = Array.from({ length: n }, (_, k) => keep && prev.sets[k].done ? prev.sets[k] : { w: wt, r, done: false });   // finished sets keep what was actually lifted
       return { name, muscle: x.muscle ?? null, type: "strength", sets, min: null, done: sets.every(s => s.done) };
     }
     if (x.minutes !== undefined && (!Number.isInteger(x.minutes) || x.minutes < 1 || x.minutes > 600)) fail(`${w}: minutes must be 1-600.`);
@@ -152,7 +163,8 @@ function guessKind(ex) { return ex?.length && ex.every(e => e.type === "stretch"
 function out(s) {
   return { id: s.id, date: s.day, weekday: weekday(s.day), title: s.title, kind: s.kind, status: s.status,
     exercises: (s.exercises || []).map(e => e.sets?.length
-      ? { name: e.name, muscle: e.muscle, sets: e.sets.length, reps: e.sets[0].r, weight: e.sets[0].w, sets_done: e.sets.filter(x => x.done).length }
+      ? { name: e.name, muscle: e.muscle, sets: e.sets.length, reps: e.sets[0].t ?? e.sets[0].r, weight: e.sets[0].w, sets_done: e.sets.filter(x => x.done).length,
+          ...(e.sets.some(x => x.done) ? { done_sets: e.sets.filter(x => x.done).map(x => `${x.w ?? "bw"}x${x.r}`) } : {}) }
       : { name: e.name, minutes: e.min, done: !!e.done, ...(e.stats ? { run: runOut(e.stats) } : {}) }),
     ...(s.notes ? { notes: s.notes } : {}), added_by: s.source };
 }
@@ -174,6 +186,15 @@ function toStats(a, where) {
   if (st.distance_km && st.duration_min) st.pace_sec = Math.round(st.duration_min * 60 / st.distance_km);
   if (!Object.keys(st).length) fail(`${where}: give at least one run value (distance_km, duration_min, avg_hr, ...).`);
   return st;
+}
+function readyLevel(d, prof, recent) {
+  if (!d || (d.rhr == null && d.hrv == null)) return null;
+  const dr = d.rhr != null && prof.rhr_base ? d.rhr - prof.rhr_base : null, hr = d.hrv != null && prof.hrv_base ? d.hrv / prof.hrv_base : null;
+  if (dr === null && hr === null) return "no baseline set";
+  const high3 = [0, 1, 2].every(i => { const x = recent.find(y => y.day === addDays(d.day, -i)); return x?.rhr != null && prof.rhr_base && x.rhr - prof.rhr_base >= 5; });
+  if ((dr !== null && dr >= 8) || (hr !== null && hr < 0.75) || high3) return "rest";
+  if ((dr !== null && dr >= 4) || (hr !== null && hr < 0.9)) return "easy";
+  return "ok";
 }
 function describe(before, after, today) {
   if (before.status !== after.status) return `Marked “${after.title}” ${after.status}`;
@@ -212,6 +233,9 @@ async function callTool(name, args, ctx) {
       profile: { goal: prof.goal, weekly_targets: prof.targets, notes: prof.notes || null },
       this_week: { starts: ws, done: counts, targets: prof.targets }, streak_days: streak,
       days_since_trained: last, best_lifts: best,
+      readiness: await (async () => { const daily = await store.listDaily(uid, addDays(today, -13)); const td = daily.find(x => x.day === today);
+        return { baseline: { resting_hr: prof.rhr_base ?? null, hrv: prof.hrv_base ?? null }, today: td ? { resting_hr: td.rhr, hrv: td.hrv, level: readyLevel(td, prof, daily) } : null,
+          recent: daily.map(x => ({ date: x.day, resting_hr: x.rhr, hrv: x.hrv })) }; })(),
       workouts: shown.map(out),
     };
   }
@@ -300,6 +324,17 @@ async function callTool(name, args, ctx) {
     return { created: out(s) };
   }
 
+  if (name === "log_readiness") {
+    const day = args.date ?? today; if (!isDate(day)) fail("date must be YYYY-MM-DD.");
+    const chk = (k, lo, hi) => { const v = args[k]; if (v === undefined || v === null) return undefined; if (!Number.isInteger(v) || v < lo || v > hi) fail(`${k} must be a whole number from ${lo} to ${hi}.`); return v; };
+    const rhr = chk("resting_hr", 25, 150), hrv = chk("hrv", 5, 300);
+    if (rhr === undefined && hrv === undefined) fail("Give resting_hr, hrv, or both.");
+    const daily = await store.listDaily(uid, addDays(day, -3)), old = daily.find(x => x.day === day);
+    const saved = await store.upsertDaily(uid, { day, rhr: rhr ?? old?.rhr ?? null, hrv: hrv ?? old?.hrv ?? null });
+    return { date: day, resting_hr: saved.rhr, hrv: saved.hrv, baseline: { resting_hr: prof.rhr_base ?? null, hrv: prof.hrv_base ?? null },
+      level: readyLevel(saved, prof, daily.filter(x => x.day !== day).concat(saved)) };
+  }
+
   if (name === "set_profile") {
     const patch = {};
     if (args.goal !== undefined) { if (typeof args.goal !== "string" || args.goal.length > 200) fail("goal must be text up to 200 characters."); patch.goal = args.goal.trim() || "general fitness"; }
@@ -311,10 +346,12 @@ async function callTool(name, args, ctx) {
     }
     if (args.notes !== undefined) { if (typeof args.notes !== "string" || args.notes.length > 2000) fail("notes must be text up to 2000 characters."); patch.notes = args.notes.trim(); }
     if (args.timezone !== undefined) { if (typeof args.timezone !== "string" || !validTz(args.timezone)) fail("timezone must be an IANA name like America/Los_Angeles."); patch.timezone = args.timezone; }
+    for (const [arg, col, lo, hi] of [["baseline_resting_hr", "rhr_base", 25, 120], ["baseline_hrv", "hrv_base", 5, 300]]) if (args[arg] !== undefined) {
+      if (!Number.isInteger(args[arg]) || args[arg] < lo || args[arg] > hi) fail(`${arg} must be a whole number from ${lo} to ${hi}.`); patch[col] = args[arg]; }
     if (!Object.keys(patch).length) fail("Nothing to change.");
     const n = { ...prof, ...patch };
-    const saved = await store.upsertProfile(uid, { goal: n.goal, targets: n.targets, notes: n.notes, timezone: n.timezone });
-    return { profile: { goal: saved.goal, weekly_targets: saved.targets, notes: saved.notes || null, timezone: saved.timezone } };
+    const saved = await store.upsertProfile(uid, { goal: n.goal, targets: n.targets, notes: n.notes, timezone: n.timezone, rhr_base: n.rhr_base ?? null, hrv_base: n.hrv_base ?? null });
+    return { profile: { goal: saved.goal, weekly_targets: saved.targets, notes: saved.notes || null, timezone: saved.timezone, baseline_resting_hr: saved.rhr_base ?? null, baseline_hrv: saved.hrv_base ?? null } };
   }
   fail(`Unknown tool: ${name}`);
 }
@@ -380,6 +417,8 @@ const store = {
   async update(uid, id, row) { return must(await db.from("wk_sessions").update(row).eq("user_id", uid).eq("id", id).select(COLS).single()); },
   async remove(uid, id) { must(await db.from("wk_sessions").delete().eq("user_id", uid).eq("id", id)); },
   async logChange(uid, c) { must(await db.from("wk_changes").insert({ user_id: uid, ...c })); },
+  async listDaily(uid, from) { return must(await db.from("wk_daily").select("day,rhr,hrv").eq("user_id", uid).gte("day", from).order("day")); },
+  async upsertDaily(uid, row) { return must(await db.from("wk_daily").upsert({ user_id: uid, ...row }).select("day,rhr,hrv").single()); },
 };
 
 Deno.serve(async (req) => {

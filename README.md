@@ -2,9 +2,9 @@
 
 A phone-first workout tracker, built the same way as Plan: a static page on GitHub Pages, with data in the same Supabase project and the same sign-in. It keeps its data in its own `wk_*` tables.
 
-- **Today:** the set you're on, what's next, your streak, a rest timer, weekly strength/cardio/stretch rings and a suggestion.
-- **Log:** each day's workouts. Tap a set to tick it off. Type exercises one per line, like `Bench press: 4x8 @60` (kg) or `Run: 20 min`.
-- **Progress:** a muscle recovery map, a personal-record line per lift, a 5-week streak calendar and a weekly recap.
+- **Today:** a week strip, a morning recovery check (resting heart rate and HRV against your normal numbers), the set you're on with a rest-timer ring, today's full checklist and weekly rings.
+- **Log:** each day's workouts. Change any set's weight or reps to what you actually did, tick it off, and see what you did last time and what to lift next time. Stretches have a countdown timer. Type exercises one per line, like `Bench press: 4x8 @60` (kg) or `Run: 20 min`.
+- **Progress:** a front-and-back muscle recovery map, 7-day cardio load, a personal-record line per lift, zone 2 pace, a 5-week calendar and a weekly recap.
 - **Claude:** chat in the Claude app and Claude plans or changes your workouts directly. Every change shows up here with Undo.
 
 Open `index.html?preview` to try it with sample data. Nothing is saved in preview mode.
@@ -30,6 +30,7 @@ Turn on both Workout and Plan in a chat, and Claude can plan your training and p
 | `add_workouts` | Plans or logs workouts (up to 21 at once) |
 | `update_workouts` | Moves, edits, marks done or skipped |
 | `delete_workouts` | Removes workouts (only when you ask) |
+| `log_readiness` | Saves your morning resting heart rate and HRV and returns ok / easy / rest |
 | `log_run` | Saves run data (distance, time, pace, heart rate, cardio load, zone minutes), e.g. read from a Fitbit screenshot |
 | `set_profile` | Saves your goal, weekly targets and notes (split, injuries, preferred times) |
 

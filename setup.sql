@@ -94,3 +94,22 @@ drop policy if exists "Own rows only" on public.wk_push;
 create policy "Own rows only" on public.wk_push for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 drop policy if exists "Own rows only" on public.wk_rest;
 create policy "Own rows only" on public.wk_rest for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ===== Morning recovery check (added Nov 2026) =====
+-- Your normal resting heart rate and HRV, and each morning's reading.
+alter table public.wk_profile add column if not exists rhr_base integer check (rhr_base between 25 and 120);
+alter table public.wk_profile add column if not exists hrv_base integer check (hrv_base between 5 and 300);
+create table if not exists public.wk_daily (
+  user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
+  day        date        not null,
+  rhr        integer     check (rhr between 25 and 150),
+  hrv        integer     check (hrv between 5 and 300),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, day)
+);
+alter table public.wk_daily enable row level security;
+drop policy if exists "Own rows only" on public.wk_daily;
+create policy "Own rows only" on public.wk_daily for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+do $$ begin
+  begin alter publication supabase_realtime add table public.wk_daily; exception when duplicate_object then null; end;
+end $$;
