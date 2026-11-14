@@ -7,30 +7,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Workout">
-<meta name="theme-color" content="#EEF1F8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0B1020" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0E1116">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
-/* Same Bento look as Plan. Colour jobs: red = now, blue = next, teal = progress and ready. */
+/* Dark, big numbers, one colour per meaning: green = done or go, amber = caution, red = low or sore, blue = active. */
 :root {
-  --page: #EEF1F8; --tile: #FFFFFF; --tile-2: #F2F5FA; --line: #E2E7F1;
-  --ink: #14213D; --ink-2: #5A6683; --ink-3: #8A94AD;
-  --red: #E5432D; --on-red: #FFFFFF; --red-soft: #FFE3DE; --on-red-soft: #8A1F12; --red-mid: #F59A8C;
-  --blue: #2F6BFF; --on-blue: #FFFFFF; --blue-soft: #E3ECFF; --on-blue-soft: #1C3D94;
-  --teal: #0891B2; --on-teal: #FFFFFF; --teal-soft: #D2F1FA; --on-teal-soft: #075A70;
-  --amber-soft: #FFF1D6; --on-amber-soft: #7A4A00;
-  --focus: #2F6BFF; --font: "Plus Jakarta Sans", ui-sans-serif, -apple-system, system-ui, sans-serif;
-  --r-tile: 22px; --r-ctl: 14px;
+  --page: #0E1116; --tile: #181C24; --tile-2: #232936; --line: #2A3140;
+  --ink: #F2F4F8; --ink-2: #9AA3B2; --ink-3: #5F6878;
+  --red: #FF6B5E; --on-red: #1A0B09; --red-soft: #3A1D1B; --on-red-soft: #FFC9C3; --red-mid: #B8554C;
+  --blue: #6FA8FF; --on-blue: #08111F; --blue-soft: #1B2B47; --on-blue-soft: #CFE0FF;
+  --green: #3DDC84; --teal: #3DDC84; --on-teal: #06130B; --teal-soft: #173D2A; --on-teal-soft: #BFF3D5;
+  --amber: #F5B83D; --amber-soft: #3D2F10; --on-amber-soft: #FFE2A8;
+  --focus: #6FA8FF; --font: "Plus Jakarta Sans", ui-sans-serif, -apple-system, system-ui, sans-serif;
+  --r-tile: 18px; --r-ctl: 14px; color-scheme: dark;
 }
-@media (prefers-color-scheme: dark) { :root {
-  --page: #0B1020; --tile: #161D30; --tile-2: #1E2740; --line: #263049;
-  --ink: #EEF2FB; --ink-2: #A3AECB; --ink-3: #74809E;
-  --red-soft: #4A1F1A; --on-red-soft: #FFD9D2; --red-mid: #9C3A2C; --blue: #3D78FF; --blue-soft: #1E3366; --on-blue-soft: #DCE6FF;
-  --teal: #22B8DC; --on-teal: #03222C; --teal-soft: #0E4152; --on-teal-soft: #C9F1FC; --amber-soft: #4A3610; --on-amber-soft: #FFE2A8; --focus: #8DB4FF; color-scheme: dark;
-} }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; overflow-x: clip; }
 body { background: var(--page); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
@@ -194,6 +187,67 @@ textarea.field { padding: 10px 12px; min-height: 140px; resize: vertical; line-h
 .zbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--tile-2); margin-top: 6px; }
 .zbar i { display: block; height: 100%; }
 .toast { position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; background: var(--ink); color: var(--page); padding: 10px 16px; border-radius: 14px; font-weight: 700; font-size: 14px; }
+
+/* ===== v3 components ===== */
+.ttl h1 { font-size: 30px; }
+.donebtn, .go { background: var(--green); color: #06130B; }
+.go { border: 0; border-radius: 14px; height: 48px; padding: 0 22px; font-weight: 800; font-size: 15px; flex: none; }
+.fab { background: var(--blue); color: #08111F; }
+.tab[aria-current="page"]::after { background: var(--blue); }
+.tabbar .in { background: #151922; box-shadow: 0 0 0 1px var(--line), 0 12px 30px -10px #000; }
+.alert { background: var(--blue); color: #08111F; }
+.alert button { background: rgba(8, 17, 31, .14); }
+.toast { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); color: #0E1116; }
+.wd.done i { background: var(--green); color: #06130B; }
+.wd.today { color: var(--ink); }
+.wd.today i { box-shadow: 0 0 0 2.5px var(--blue); }
+.heat .l1 { background: #1F4D36; } .heat .l2 { background: #2A7A52; } .heat .l3 { background: #33AB6B; } .heat .l4 { background: #3DDC84; }
+.heat .today { box-shadow: inset 0 0 0 2px var(--blue); }
+.hero { justify-items: center; text-align: center; padding: 18px 16px 16px; gap: 3px; }
+.dialbtn { background: none; display: grid; justify-items: center; gap: 3px; padding: 0; }
+.hero b { font-size: 19px; font-weight: 800; }
+.hero .dailyrow { width: 100%; text-align: left; margin-top: 10px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stat3 { padding: 12px 12px 14px; gap: 2px; }
+.num { font-size: 27px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+.num small { font-size: 14px; color: var(--ink-2); font-weight: 600; letter-spacing: 0; }
+.meter { height: 4px; border-radius: 2px; background: var(--tile-2); overflow: hidden; margin-top: 8px; }
+.meter i { display: block; height: 100%; border-radius: 2px; }
+.pcard { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.pcard > div { display: grid; gap: 2px; min-width: 0; }
+.wstats { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 4px 2px; }
+.wstats small { display: block; font-size: 11px; color: var(--ink-2); font-weight: 600; }
+.wstats b { font-size: 18px; font-weight: 800; }
+.xname { font-weight: 800; font-size: 15px; color: var(--blue); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.xname span { color: var(--ink-2); font-weight: 600; font-size: 12.5px; white-space: nowrap; }
+.tbl { display: grid; gap: 3px; }
+.trow { display: grid; grid-template-columns: 22px minmax(0, 1fr) 62px 54px 36px; gap: 6px; align-items: center; padding: 3px 5px; border-radius: 10px; }
+.thead { font-size: 11px; font-weight: 700; color: var(--ink-3); padding-top: 0; padding-bottom: 0; }
+.thead span:nth-child(n+3) { text-align: center; }
+.trow .sn { font-weight: 800; font-size: 13px; text-align: center; }
+.trow .prev { font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trow input { width: 100%; min-width: 0; height: 36px; border-radius: 9px; border: 1.5px solid transparent; background: var(--tile-2); text-align: center; font-size: 16px; font-weight: 700; padding: 0; }
+.trow input:focus { border-color: var(--blue); outline: none; }
+.trow.done { background: var(--teal-soft); }
+.trow.done input { background: transparent; }
+.tcheck { width: 36px; height: 36px; border-radius: 9px; border: 0; background: var(--tile-2); color: var(--ink-3); display: grid; place-items: center; padding: 0; }
+.tcheck svg { width: 17px; height: 17px; }
+.tcheck[aria-pressed="true"] { background: var(--green); color: #06130B; }
+.restbar { position: fixed; left: 14px; right: 14px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 25; max-width: 420px; margin: 0 auto; background: var(--blue); color: #08111F; border-radius: 16px; padding: 8px 8px 8px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 24px -10px #000; }
+.restbar b { font-size: 17px; font-weight: 800; }
+.restbar button { border: 0; background: rgba(8, 17, 31, .14); color: inherit; font-weight: 800; border-radius: 10px; min-height: 38px; padding: 0 12px; margin-left: 4px; }
+.resting .sheet .wrap { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
+.feed { gap: 8px; }
+.fhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fhead b { font-size: 16px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.f3 small { display: block; font-size: 11px; color: var(--ink-2); font-weight: 600; }
+.f3 b { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.f3 b i { font-style: normal; font-size: 12px; color: var(--ink-2); font-weight: 600; letter-spacing: 0; }
+.kdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.wbars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 52px; margin-top: 6px; }
+.wbars i { display: block; border-radius: 4px; background: var(--green); min-height: 4px; }
+.wbars i.zero { background: var(--tile-2); }
 </style>
 </head>
 <body>
@@ -207,23 +261,24 @@ textarea.field { padding: 10px 12px; min-height: 140px; resize: vertical; line-h
 <main class="sheet"><div class="wrap" id="view"></div></main>
 
 <nav class="tabbar" aria-label="Sections"><div class="in">
-  <button class="tab" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="9" rx="2"/><rect x="13" y="4" width="7" height="5" rx="2"/><rect x="13" y="11" width="7" height="9" rx="2"/><rect x="4" y="15" width="7" height="5" rx="2"/></svg>Today</button>
-  <button class="tab" data-tab="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h3M10 6h10M4 12h3M10 12h10M4 18h3M10 18h10"/></svg>Log</button>
+  <button class="tab" data-tab="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="9" rx="2"/><rect x="13" y="4" width="7" height="5" rx="2"/><rect x="13" y="11" width="7" height="9" rx="2"/><rect x="4" y="15" width="7" height="5" rx="2"/></svg>Home</button>
+  <button class="tab" data-tab="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h3M10 6h10M4 12h3M10 12h10M4 18h3M10 18h10"/></svg>Workout</button>
   <button class="fab" data-act="add" aria-label="Add workout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button class="tab" data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19l5-6 4 3 7-9"/><path d="M15 7h5v5"/></svg>Progress</button>
+  <button class="tab" data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19l5-6 4 3 7-9"/><path d="M15 7h5v5"/></svg>Activity</button>
   <button class="tab" data-tab="claude"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z"/><path d="M8.5 10.5h7"/></svg>Claude</button>
 </div></nav>
 
 <div id="sheetRoot"></div>
 <div id="authRoot"></div>
 <div id="toastRoot"></div>
+<div id="restRoot"></div>
 <div id="alertRoot"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script>
 /* ---------- state ---------- */
-const S = { tab: "today", day: todayISO(), mode: "loading", sessions: [], changes: [], daily: [], hold: null, editDaily: false, profile: null, connector: false, newUrl: null, sheet: null, restEnd: 0, prEx: null, stale: false };
+const S = { tab: "today", day: todayISO(), mode: "loading", sessions: [], changes: [], daily: [], hold: null, editDaily: false, profile: null, connector: false, newUrl: null, sheet: null, restEnd: 0, prEx: null, actView: "feed", stale: false };
 let sb = null, uid = null, api = null;
 const REST_SEC = 90;
 const KINDS = ["strength", "cardio", "stretch"];
@@ -242,6 +297,8 @@ function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;
 function ago(ts) { const s = (Date.now() - new Date(ts)) / 1000; return s < 60 ? "just now" : s < 3600 ? Math.floor(s / 60) + " min ago" : s < 86400 ? Math.floor(s / 3600) + " h ago" : new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
 function toast(m) { const r = document.getElementById("toastRoot"); r.innerHTML = `<div class="toast" role="status">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => r.innerHTML = "", 2600); }
 function prof() { return S.profile || { goal: "general fitness", targets: { strength: 4, cardio: 2, stretch: 3 }, notes: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }; }
+function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} }
 function fmtNum(n) { return Math.round(n).toLocaleString("en-US"); }
 function fmtClock(min) { const t = Math.round(min * 60), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(sec).padStart(2, "0"); }
 function parseClock(v) { v = String(v ?? "").trim(); if (!v) return null; if (v.includes(":")) { const p = v.split(":").map(Number); if (p.some(isNaN)) return null; return p.length === 3 ? p[0] * 60 + p[1] + p[2] / 60 : p[0] + p[1] / 60; } const n = parseFloat(v); return isNaN(n) ? null : n; }
@@ -433,7 +490,7 @@ function previewApi() {
 
 /* ---------- views ---------- */
 function render() {
-  const titles = { today: ["Today", dayLabel(todayISO()) + (streak() > 1 ? " · " + streak() + "-day streak" : "")], log: [relDay(S.day), dayLabel(S.day, { month: "long", day: "numeric" })], progress: ["Progress", "Recovery, records and streak"], claude: ["Claude", "Plan your training by chatting"] };
+  const titles = { today: [dayLabel(todayISO(), { weekday: "long" }), dayLabel(todayISO(), { month: "long", day: "numeric" }) + (streak() > 1 ? " · " + streak() + "-day streak" : "")], log: [relDay(S.day), dayLabel(S.day, { month: "long", day: "numeric" })], progress: ["Activity", S.actView === "feed" ? "Your finished workouts" : "Recovery, records and trends"], claude: ["Claude", "Plan your training by chatting"] };
   const [h, p] = titles[S.tab];
   document.getElementById("pageTitle").textContent = h;
   document.getElementById("pageSub").textContent = p;
@@ -442,6 +499,7 @@ function render() {
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-current", b.dataset.tab === S.tab ? "page" : "false"));
   const v = document.getElementById("view");
   v.innerHTML = S.mode === "loading" ? `<div class="tile"><p class="empty">Loading your workouts…</p></div>` : { today: viewToday, log: viewLog, progress: viewProgress, claude: viewClaude }[S.tab]();
+  drawRest();
 }
 
 // The first unfinished set of today's first unfinished workout.
@@ -468,32 +526,42 @@ function rings(c, tg) {
   return `<div style="display:flex;align-items:center;gap:16px"><svg viewBox="0 0 72 72" width="88" height="88" role="img" aria-label="Weekly goals">${arcs}</svg><div style="display:grid;gap:4px;font-size:14px">${labels}</div></div>`;
 }
 
-// Morning readiness from resting heart rate and HRV against your baselines.
+// Morning recovery, 0-100, from resting heart rate and HRV against your normal numbers. The worse of the two signals sets the score.
+// 67+ = good to go, 34-66 = take it easier, 33 or less = rest. (Resting HR +4 or HRV -10% lands at 66; +8 or -25% lands at 33.)
 function readiness(day = todayISO()) {
   const p = prof(), d = S.daily.find(x => x.day === day);
   if (!d || (d.rhr == null && d.hrv == null)) return null;
   const dr = d.rhr != null && p.rhr_base ? d.rhr - p.rhr_base : null, hr = d.hrv != null && p.hrv_base ? d.hrv / p.hrv_base : null;
+  if (dr === null && hr === null) return { ...d, dr, hr, score: null, level: "none" };
+  const a = dr === null ? 100 : 100 - Math.max(0, dr) * 8.4;
+  const b = hr === null ? 100 : hr >= 0.9 ? 100 - Math.max(0, 1 - hr) * 340 : 66 - (0.9 - hr) * 220;
   const high3 = [0, 1, 2].every(i => { const x = S.daily.find(y => y.day === addDays(day, -i)); return x?.rhr != null && p.rhr_base && x.rhr - p.rhr_base >= 5; });
-  let level = dr === null && hr === null ? "none" : "ok";
-  if ((dr !== null && dr >= 4) || (hr !== null && hr < 0.9)) level = "easy";
-  if ((dr !== null && dr >= 8) || (hr !== null && hr < 0.75) || high3) level = "rest";
-  return { ...d, dr, hr, level };
+  const score = Math.max(1, Math.min(100, Math.round(Math.min(a, b, high3 ? 33 : 100))));
+  return { ...d, dr, hr, score, level: score >= 67 ? "ok" : score >= 34 ? "easy" : "rest" };
 }
 const READY_TEXT = {
   ok: ["Good to go", "Train as planned."],
-  easy: ["Take it easier today", "Drop a set per exercise. Easy cardio, 20–30 min, no intervals."],
-  rest: ["Rest day recommended", "Your body is still recovering. Rest or take an easy walk."],
-  none: ["This morning", "Set your baselines in the Claude tab to get advice."],
+  easy: ["Take it easier today", "Drop a set per exercise. Easy cardio, 20–30 min."],
+  rest: ["Rest day recommended", "Rest or take an easy walk."],
+  none: ["No baseline yet", "Set your normal numbers in the Claude tab."],
 };
-function readinessTile() {
+const LEVEL_COLOR = { ok: "var(--green)", easy: "var(--amber)", rest: "var(--red)", none: "var(--ink-3)" };
+function dial(rd) {
+  const C = 2 * Math.PI * 52, f = rd?.score ? rd.score / 100 : 0;
+  return `<svg viewBox="0 0 124 124" width="172" height="172" role="img" aria-label="Recovery score ${rd?.score ?? "not set"}"><circle cx="62" cy="62" r="52" fill="none" stroke="var(--tile-2)" stroke-width="10"/>
+    ${f ? `<circle cx="62" cy="62" r="52" fill="none" stroke="${LEVEL_COLOR[rd.level]}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(f * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 62 62)"/>` : ""}
+    <text x="62" y="68" text-anchor="middle" font-size="36" font-weight="800" fill="var(--ink)">${rd?.score ?? "–"}</text><text x="62" y="86" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink-2)">Recovery</text></svg>`;
+}
+function recoveryTile() {
   const t = todayISO(), p = prof(), d = S.daily.find(x => x.day === t), rd = readiness(t);
-  if (!rd || S.editDaily) return `<form class="tile" id="dailyForm"><span class="lbl">This morning's recovery</span><div class="dailyrow">
+  const form = `<form id="dailyForm" class="dailyrow">
       <label>Resting HR<input class="field" id="dRhr" inputmode="numeric" value="${d?.rhr ?? ""}" placeholder="${p.rhr_base || 50}"></label>
       <label>HRV<input class="field" id="dHrv" inputmode="numeric" value="${d?.hrv ?? ""}" placeholder="${p.hrv_base || 100}"></label>
-      <button class="mini" type="submit">Save</button></div><span class="small">From your Fitbit. Or tell Claude your numbers.</span></form>`;
+      <button class="mini" type="submit">Save</button></form>`;
+  if (!rd || S.editDaily) return `<div class="tile hero">${dial(null)}<b>How's your recovery?</b><span class="small">Enter this morning's Fitbit numbers, or tell Claude.</span>${form}</div>`;
   const [title, advice] = READY_TEXT[rd.level];
   const nums = [rd.rhr != null ? `Resting HR ${rd.rhr}${rd.dr !== null ? ` (${rd.dr >= 0 ? "+" : "−"}${Math.abs(rd.dr)})` : ""}` : "", rd.hrv != null ? `HRV ${rd.hrv}${rd.hr !== null ? ` (${rd.hr >= 1 ? "+" : "−"}${Math.abs(Math.round((rd.hr - 1) * 100))}%)` : ""}` : ""].filter(Boolean).join(" · ");
-  return `<button class="tile tap ready ${rd.level}" data-act="editdaily"><b>${title}</b><span>${esc(nums)}</span><span>${advice}</span></button>`;
+  return `<div class="tile hero"><button class="tap dialbtn" data-act="editdaily" aria-label="Change this morning's numbers">${dial(rd)}<b style="color:${LEVEL_COLOR[rd.level]}">${title}</b><span class="small">${esc(nums)}</span><span class="small">${advice}</span></button></div>`;
 }
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 function weekStrip() {
@@ -505,12 +573,6 @@ function weekStrip() {
     return `<button class="wd ${cls}${d === t ? " today" : ""}" data-act="goday" data-id="${d}" aria-label="${dayLabel(d)}${done ? ", done" : list.length ? ", planned" : ", rest"}">${"MTWTFSS"[i]}<i>${done ? CHECK : first ? L[first.kind] : ""}</i></button>`;
   }).join("")}</div>`;
 }
-function ring(frac, label, kind) {
-  const C = 2 * Math.PI * 26;
-  return `<svg class="ring" viewBox="0 0 64 64" width="76" height="76" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="none" stroke="var(--tile-2)" stroke-width="6"/>
-    <circle ${kind ? `id="${kind}Ring"` : ""} cx="32" cy="32" r="26" fill="none" stroke="var(--red)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(Math.max(0, Math.min(1, frac)) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 32 32)"/>
-    <text ${kind ? `data-${kind}text` : ""} x="32" y="37" text-anchor="middle" font-size="15" font-weight="800" fill="var(--ink)">${label}</text></svg>`;
-}
 function mmss(sec) { sec = Math.max(0, Math.ceil(sec)); return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); }
 // What you did last time on this exercise, e.g. "37.5 kg · 10, 10, 10, 9".
 function lastTime(name, s) {
@@ -521,40 +583,25 @@ function lastTime(name, s) {
 }
 function holdOn(s, ei) { return S.hold && S.hold.id === s.id && S.hold.ei === ei; }
 
-function viewToday() {
-  const cur = current(), c = weekCounts(), tg = prof().targets, rd = readiness();
-  const rest = Math.max(0, (S.restEnd - Date.now()) / 1000);
-  let html = weekStrip() + readinessTile();
-  if (cur) {
-    const { e, si, s } = cur, isSets = e.sets?.length, last = isSets ? lastTime(e.name, s) : "";
-    const holding = holdOn(s, cur.ei), canHold = !isSets && e.min && (e.type === "stretch" || s.kind === "stretch");
-    const rg = rest ? ring(rest / REST_SEC, mmss(rest), "rest")
-      : holding ? ring((S.hold.end - Date.now()) / 1000 / S.hold.total, mmss((S.hold.end - Date.now()) / 1000), "hold")
-      : isSets ? ring(e.sets.filter(x => x.done).length / e.sets.length, `${si + 1}/${e.sets.length}`) : ring(0, e.min ? e.min + "m" : "Go");
-    const bar = isSets ? `<div class="setbar">${e.sets.map((x, k) => `<i class="${x.done ? "on" : k === si ? "cur" : ""}"></i>`).join("")}</div>` : "";
-    html += `<div class="tile now wide"><span class="lbl">Now · ${esc(s.title)}${rest ? " · resting" : ""}</span>
-      <div class="nowrow">${rg}<div><div class="title">${esc(e.name)}</div>
-        <span class="small">${isSets ? `Set ${si + 1} of ${e.sets.length} · ${e.sets[si].w ? e.sets[si].w + " kg × " : ""}${e.sets[si].r} reps` : `${e.min ? e.min + " min" : ""} ${e.type}`}</span>
-        ${last ? `<span class="small">Last time ${esc(last)}</span>` : ""}</div></div>
-      <div class="nowbtns">${canHold && !holding ? `<button class="donebtn" data-act="hold" data-id="${s.id}" data-ei="${cur.ei}">Start ${e.min} min timer</button><button class="link" data-act="tick" data-id="${s.id}" data-ei="${cur.ei}" data-si="-1">Done</button>`
-        : `<button class="donebtn" data-act="tick" data-id="${s.id}" data-ei="${cur.ei}" data-si="${isSets ? si : -1}">${isSets ? "Set done" : "Done"}</button>${rest ? `<button class="link" data-act="restoff">Skip rest</button>` : holding ? `<button class="link" data-act="holdoff">Stop</button>` : ""}`}</div>${bar}</div>`;
-  } else {
-    const any = sessionsOn(todayISO()).filter(s => s.status !== "skipped").length;
-    html += `<div class="tile ok wide"><span class="lbl">${any ? "All done today" : "Nothing planned today"}</span><div class="mid">${any ? "Nice work." : "Ask Claude for a plan, or tap + to add a workout."}</div></div>`;
-  }
-  html += checklist(cur);
-  html += `<div class="tile"><span class="lbl">This week</span>${rings(c, tg)}</div>`;
-  if (!cur) { const [sg, why] = suggestion(rd); html += `<div class="tile"><span class="lbl">Suggested</span><div class="mid">${esc(sg)}</div><span class="small">${esc(why)}</span></div>`; }
-  return html;
+function todayList() { return sessionsOn(todayISO()).filter(s => s.status !== "skipped").sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind)); }
+function planTile() {
+  const list = todayList(), open = list.filter(s => s.status !== "done"), cur = current();
+  if (!list.length) { const [sg, why] = suggestion(readiness());
+    return `<div class="tile pcard"><div><span class="lbl">Nothing planned today</span><div class="mid">${esc(sg)}</div><span class="small">${esc(why)}</span></div><button class="go" data-act="add">Add</button></div>`; }
+  if (!open.length) { const vol = list.reduce((a, s) => a + volume(s), 0), sets = list.flatMap(s => s.exercises).flatMap(e => e.sets || []).filter(x => x.done).length;
+    return `<div class="tile pcard"><div><span class="lbl">All done today</span><div class="mid">${list.map(s => esc(s.title)).join(", ")}</div><span class="small">${sets ? `${sets} sets · ${fmtNum(vol)} kg lifted` : "Nice work."}</span></div><button class="go" data-act="startworkout" style="background:var(--tile-2);color:var(--ink)">View</button></div>`; }
+  const first = open[0], started = list.some(hasActivity), after = open.slice(1).map(s => s.title.toLowerCase());
+  return `<div class="tile pcard"><div><span class="lbl">${started ? "In progress" : "Today's plan"}</span><div class="mid">${esc(first.title)}</div>
+    <span class="small">${started && cur ? `Next: ${esc(cur.e.name)}${cur.si >= 0 ? ` · set ${cur.si + 1} of ${cur.e.sets.length}` : ""}` : `${first.exercises.length} ${first.exercises.length === 1 ? "exercise" : "exercises"}`}${after.length ? ` · then ${esc(after.join(", "))}` : ""}</span></div>
+    <button class="go" data-act="startworkout">${started ? "Resume" : "Start"}</button></div>`;
 }
-// Everything planned for today, in order, with what's done.
-function checklist(cur) {
-  const list = sessionsOn(todayISO()).filter(s => s.status !== "skipped").sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
-  const all = list.flatMap(s => s.exercises); if (!all.length) return "";
-  const rows = list.map(s => (list.length > 1 ? `<div class="clh">${esc(s.title)}</div>` : "") + s.exercises.map((e, ei) => {
-    const done = exDone(e), isCur = cur && cur.s.id === s.id && cur.ei === ei, n = (e.sets || []).filter(x => x.done).length;
-    return `<div class="cl ${done ? "done" : isCur ? "cur" : ""}"><span>${esc(e.name)}</span><span>${done ? "✓" : e.sets?.length && n ? `${n}/${e.sets.length}` : esc(exSummary(e))}</span></div>`; }).join("")).join("");
-  return `<button class="tile tap" data-act="goday" data-id="${todayISO()}"><span class="lbl">Today's session · ${all.filter(exDone).length} of ${all.length} done</span>${rows}</button>`;
+function viewToday() {
+  const c = weekCounts(), tg = prof().targets || {}, t = todayISO();
+  const stat = (k, label, col) => `<div class="tile stat3"><div class="num">${c[k]}<small>/${tg[k] || 0}</small></div><span class="small">${label}</span><div class="meter"><i style="width:${Math.min(100, Math.round(c[k] / Math.max(1, tg[k] || 1) * 100))}%;background:${col}"></i></div></div>`;
+  const next = S.sessions.filter(s => s.day > t && s.status === "planned").sort((a, b) => a.day.localeCompare(b.day))[0];
+  return weekStrip() + recoveryTile() + planTile()
+    + `<div class="grid3">${stat("strength", "Lifts", "var(--blue)")}${stat("cardio", "Cardio", "var(--red)")}${stat("stretch", "Stretch", "var(--green)")}</div>`
+    + (next ? `<button class="tile tap pcard" data-act="goday" data-id="${next.day}"><div><span class="lbl">Coming up · ${relDay(next.day)}</span><div style="font-weight:700">${esc(next.title)}</div></div><span class="small" style="white-space:nowrap">${next.exercises.length} ${next.exercises.length === 1 ? "exercise" : "exercises"}</span></button>` : "");
 }
 function suggestion(rd) {
   if (rd?.level === "rest") return ["Rest or an easy walk", "Your recovery numbers are low today."];
@@ -590,27 +637,46 @@ function nextHint(e) {
   const inc = e.muscle === "legs" ? 5 : /dumbbell|lateral|curl|raise|fly/i.test(e.name) ? 1 : 2.5;
   return hit ? `<div class="nexthint">All reps hit. Next time: ${top + inc} kg</div>` : `<div class="nexthint stay">Missed a few reps. Stay at ${top} kg next time.</div>`;
 }
+// The done sets from the last time you did this exercise.
+function prevSets(name, s) {
+  const prev = S.sessions.filter(x => x.id !== s.id && x.day <= s.day).sort((a, b) => b.day.localeCompare(a.day));
+  for (const x of prev) { const sets = (x.exercises.find(y => y.name.toLowerCase() === name.toLowerCase())?.sets || []).filter(z => z.done); if (sets.length) return sets; }
+  return [];
+}
 function sessionCard(s) {
   const ex = s.exercises.map((e, ei) => {
-    const at = `data-id="${s.id}" data-ei="${ei}"`, last = e.sets?.length ? lastTime(e.name, s) : "";
-    const canHold = !e.sets?.length && e.min && !e.done && (e.type === "stretch" || s.kind === "stretch");
-    const body = e.sets?.length ? `${last ? `<span class="small">Last time: ${esc(last)}</span>` : ""}<div class="srows">${e.sets.map((x, si) => `<div class="srow ${x.done ? "done" : ""}"><span class="sn">${si + 1}</span>
-        <label class="sin"><input inputmode="decimal" data-set="w" ${at} data-si="${si}" value="${x.w ?? ""}" placeholder="BW" aria-label="Set ${si + 1} weight"><i>kg</i></label>
-        <label class="sin"><input inputmode="numeric" data-set="r" ${at} data-si="${si}" value="${x.r}" aria-label="Set ${si + 1} reps"><i>reps</i></label>
-        <button class="scheck" data-act="tick" ${at} data-si="${si}" aria-pressed="${!!x.done}" aria-label="Set ${si + 1} done">${CHECK}</button></div>`).join("")}</div>${nextHint(e)}`
-      : `<div class="sets">${holdOn(s, ei) ? `<button class="set" data-act="holdoff"><span data-holdtext>${mmss((S.hold.end - Date.now()) / 1000)}</span> · Stop</button>` : canHold ? `<button class="set" data-act="hold" ${at}>Start ${e.min} min timer</button>` : ""}
-        <button class="set" data-act="tick" ${at} data-si="-1" aria-pressed="${!!e.done}">${e.done ? "Done" : "Mark done"}</button></div>${e.stats ? runCard(e.stats) : ""}`;
-    return `<div class="ex"><div class="exh"><b>${esc(e.name)}</b><span class="small">${esc(exSummary(e))}${e.muscle ? " · " + e.muscle : ""}</span></div>${body}</div>`; }).join("");
-  return `<div class="tile"><div class="shead"><div><div class="mid">${esc(s.title)}</div><div style="display:flex;gap:6px;margin-top:2px"><span class="tag">${s.kind}</span>${s.status === "done" ? `<span class="tag done">done</span>` : s.status === "skipped" ? `<span class="tag">skipped</span>` : ""}${s.source === "claude" ? `<span class="tag ai">Claude</span>` : ""}</div></div>
+    const at = `data-id="${s.id}" data-ei="${ei}"`;
+    if (e.sets?.length) { const pv = prevSets(e.name, s);
+      return `<div class="ex"><div class="xname">${esc(e.name)}<span>${e.muscle || ""}</span></div>
+        <div class="tbl"><div class="trow thead"><span>Set</span><span>Previous</span><span>kg</span><span>Reps</span><span></span></div>
+        ${e.sets.map((x, si) => { const q = pv[si] || pv[pv.length - 1];
+          return `<div class="trow ${x.done ? "done" : ""}"><span class="sn">${si + 1}</span><span class="prev">${q ? `${q.w ?? "BW"} × ${q.r}` : "–"}</span>
+            <input inputmode="decimal" data-set="w" ${at} data-si="${si}" value="${x.w ?? ""}" placeholder="BW" aria-label="Set ${si + 1} weight in kg">
+            <input inputmode="numeric" data-set="r" ${at} data-si="${si}" value="${x.r}" aria-label="Set ${si + 1} reps">
+            <button class="tcheck" data-act="tick" ${at} data-si="${si}" aria-pressed="${!!x.done}" aria-label="Set ${si + 1} done">${CHECK}</button></div>`; }).join("")}</div>${nextHint(e)}</div>`; }
+    const canHold = e.min && !e.done && (e.type === "stretch" || s.kind === "stretch");
+    return `<div class="ex"><div class="xname">${esc(e.name)}<span>${e.min ? e.min + " min" : ""}</span></div>
+      <div class="sets">${holdOn(s, ei) ? `<button class="set" data-act="holdoff"><span data-holdtext>${mmss((S.hold.end - Date.now()) / 1000)}</span> · Stop</button>` : canHold ? `<button class="set" data-act="hold" ${at}>Start ${e.min} min timer</button>` : ""}
+        <button class="set" data-act="tick" ${at} data-si="-1" aria-pressed="${!!e.done}">${e.done ? "Done" : "Mark done"}</button></div>${e.stats ? runCard(e.stats) : ""}</div>`; }).join("");
+  return `<div class="tile"><div class="shead"><div><div class="mid">${esc(s.title)}</div><div style="display:flex;gap:6px;margin-top:3px"><span class="tag">${s.kind}</span>${s.status === "done" ? `<span class="tag done">done</span>` : s.status === "skipped" ? `<span class="tag">skipped</span>` : ""}${s.source === "claude" ? `<span class="tag ai">Claude</span>` : ""}</div></div>
     <button class="mini ghost" data-act="edit" data-id="${s.id}">Edit</button></div>
     <div class="rows">${ex || `<p class="empty">No exercises yet.</p>`}</div>${s.notes ? `<p class="hint">${esc(s.notes)}</p>` : ""}</div>`;
 }
+function elapsed(day) { const a = +lsGet("wk-start-" + day), b = +lsGet("wk-end-" + day); return a ? Math.max(0, ((b || Date.now()) - a) / 1000) : null; }
+function clockHMS(sec) { sec = Math.floor(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0"); }
 function viewLog() {
-  const list = sessionsOn(S.day);
-  return (list.length ? list.map(sessionCard).join("") : `<div class="tile"><p class="empty">No workouts on this day.</p><button class="link" data-act="add">Add a workout</button></div>`)
+  const list = sessionsOn(S.day).sort((a, b) => KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind));
+  const sets = list.flatMap(s => s.exercises).flatMap(e => e.sets || []), el = elapsed(S.day);
+  const head = list.length ? `<div class="wstats"><div><small>Time</small><b ${el !== null && !lsGet("wk-end-" + S.day) ? "data-elapsed" : ""}>${el === null ? "–" : clockHMS(el)}</b></div>
+    <div><small>Volume</small><b>${fmtNum(list.reduce((a, s) => a + volume(s), 0))} kg</b></div><div><small>Sets</small><b>${sets.filter(x => x.done).length} / ${sets.length}</b></div></div>` : "";
+  return head + (list.length ? list.map(sessionCard).join("") : `<div class="tile"><p class="empty">No workouts on this day.</p><button class="link" data-act="add">Add a workout</button></div>`)
     + (S.day !== todayISO() ? `<button class="link" data-act="gotoday" style="justify-self:center">Back to today</button>` : "");
 }
-
+function drawRest() {
+  const left = S.restEnd ? (S.restEnd - Date.now()) / 1000 : 0;
+  document.body.classList.toggle("resting", left > 0);
+  document.getElementById("restRoot").innerHTML = left > 0 ? `<div class="restbar" role="timer"><b>Rest <span data-resttext>${mmss(left)}</span></b><span><button data-act="restadj" data-n="-15" aria-label="15 seconds less">−15</button><button data-act="restadj" data-n="15" aria-label="15 seconds more">+15</button><button data-act="restoff">Skip</button></span></div>` : "";
+}
 function bodyMap(r) {
   const c = m => recColor(r[m]), head = x => `<circle cx="${x}" cy="15" r="11" fill="var(--tile-2)"/><rect x="${x - 4}" y="24" width="8" height="7" fill="var(--tile-2)"/>`;
   const arms = x => `<rect x="${x - 37}" y="42" width="12" height="50" rx="6" fill="${c("arms")}"/><rect x="${x + 25}" y="42" width="12" height="50" rx="6" fill="${c("arms")}"/>`;
@@ -667,27 +733,51 @@ function cardioBars() {
     <div class="bars">${vals.map(v => `<i class="${v ? "" : "zero"}" style="height:${Math.max(4, Math.round(v / max * 100))}%" title="${Math.round(v)}"></i>`).join("")}</div>
     <div class="barl">${days.map(d => `<span>${dayLabel(d, { weekday: "narrow" })}</span>`).join("")}</div></div>`;
 }
+const KIND_COLOR = { strength: "var(--blue)", cardio: "var(--red)", stretch: "var(--green)" };
+function feedCard(s) {
+  let cells, foot = "";
+  if (s.kind === "strength") {
+    const done = s.exercises.flatMap(e => (e.sets || []).filter(x => x.done).map(x => ({ ...x, name: e.name })));
+    let rec = 0; for (const e of s.exercises) { const top = Math.max(0, ...(e.sets || []).filter(x => x.done && x.w).map(x => x.w)), before = Math.max(0, ...history(e.name).filter(h => h.day < s.day).map(h => h.w)); if (top && before && top > before) rec++; }
+    const best = done.filter(x => x.w).sort((a, b) => b.w - a.w)[0];
+    cells = [["Volume", fmtNum(volume(s)), "kg"], ["Sets", done.length, ""], ["Records", rec, "", rec ? "var(--amber)" : ""]];
+    foot = best ? `Heaviest: ${esc(best.name)} ${best.w} kg × ${best.r}` : s.exercises.map(e => esc(e.name)).slice(0, 3).join(", ");
+  } else {
+    const st = s.exercises.find(e => e.stats)?.stats, mins = Math.round(s.exercises.reduce((a, e) => a + (e.stats?.duration_min || e.min || 0), 0));
+    if (st?.distance_km) { cells = [["Distance", st.distance_km, "km"], ["Pace", st.pace_sec ? fmtClock(st.pace_sec / 60) : "–", st.pace_sec ? "/km" : ""], st.avg_hr ? ["Avg HR", st.avg_hr, "bpm"] : ["Time", mins, "min"]];
+      const z = st.zones || [], tot = z.reduce((a, b) => a + (b || 0), 0);
+      foot = (tot ? `<div class="zbar">${z.map((m, i) => m ? `<i style="flex:${m};background:${ZONE_COLORS[i]}"></i>` : "").join("")}</div>` : "") + [st.duration_min ? fmtClock(st.duration_min) : "", st.cardio_load ? "load " + st.cardio_load : "", st.max_hr ? "max HR " + st.max_hr : ""].filter(Boolean).join(" · "); }
+    else { cells = [["Time", mins, "min"], [s.kind === "stretch" ? "Stretches" : "Activities", s.exercises.length, ""]]; foot = s.exercises.map(e => esc(e.name)).slice(0, 3).join(", "); }
+  }
+  return `<button class="tile tap feed" data-act="goday" data-id="${s.day}"><div class="fhead"><b><i class="kdot" style="background:${KIND_COLOR[s.kind]}"></i>${esc(s.title)}</b><span class="small">${relDay(s.day)}</span></div>
+    <div class="f3">${cells.map(([k, v, u, col]) => `<div><small>${k}</small><b${col ? ` style="color:${col}"` : ""}>${v}${u ? `<i> ${u}</i>` : ""}</b></div>`).join("")}</div>${foot ? `<span class="small">${foot}</span>` : ""}</button>`;
+}
+function weekBars() {
+  const ws = weekStart(todayISO()), days = [0, 1, 2, 3, 4, 5, 6].map(i => addDays(ws, i));
+  const v = days.map(d => sessionsOn(d).filter(s => s.status === "done").reduce((a, s) => a + (s.kind === "strength" ? s.exercises.flatMap(e => e.sets || []).filter(x => x.done).length * 3 : s.exercises.reduce((b, e) => b + (e.stats?.duration_min || e.min || 0), 0)), 0));
+  const max = Math.max(1, ...v), n = v.filter(Boolean).length;
+  return `<div class="tile"><div class="shead"><span class="lbl">This week</span><span class="small">${n} active ${n === 1 ? "day" : "days"} · ${streak()}-day streak</span></div>
+    <div class="wbars">${v.map(x => `<i class="${x ? "" : "zero"}" style="height:${Math.max(8, Math.round(x / max * 100))}%"></i>`).join("")}</div><div class="barl">${"MTWTFSS".split("").map(d => `<span>${d}</span>`).join("")}</div></div>`;
+}
 function viewProgress() {
+  const seg = `<div class="seg"><button data-act="actview" data-id="feed" aria-pressed="${S.actView === "feed"}">Feed</button><button data-act="actview" data-id="trends" aria-pressed="${S.actView === "trends"}">Trends</button></div>`;
+  if (S.actView === "feed") {
+    const t = todayISO(), done = S.sessions.filter(s => s.day <= t && (s.status === "done" || hasActivity(s))).sort((a, b) => b.day.localeCompare(a.day) || KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind)).slice(0, 30);
+    return seg + weekBars() + (done.length ? done.map(feedCard).join("") : `<div class="tile"><p class="empty">Finished workouts show up here.</p></div>`);
+  }
   const r = recovery(), lifts = liftNames().filter(n => history(n).length >= 2);
   if (!S.prEx || !lifts.includes(S.prEx)) S.prEx = lifts.find(n => /bench/i.test(n)) || lifts[0] || null;
-  const ws = weekStart(todayISO()), week = doneSessions().filter(s => s.day >= ws);
   const cap = m => m[0].toUpperCase() + m.slice(1), grp = { ok: [], soon: [], no: [] };
   for (const m of MUSCLES) (r[m] === null || r[m] >= 3 ? grp.ok : r[m] === 2 ? grp.soon : grp.no).push(m);
   const chips = (k, list, f) => list.length ? `<span class="small">${f}</span><div class="chips2">${list.map(m => `<span class="chip ${k}">${cap(m)}${r[m] !== null && k !== "ok" ? ` · ${r[m] === 0 ? "today" : r[m] + "d ago"}` : ""}</span>`).join("")}</div>` : "";
   const z2 = runs().filter(x => x.avg_hr >= 140 && x.avg_hr <= 155).length >= 2;
   const locked = [!lifts.length ? "Personal records: log the same lift on two different days." : "", !z2 ? "Zone 2 pace: log two runs with an average heart rate of 140–155." : ""].filter(Boolean);
-  return `<div class="tile"><span class="lbl">Muscle recovery</span>${bodyMap(r)}
+  return seg + `<div class="tile"><span class="lbl">Muscle recovery</span>${bodyMap(r)}
       ${chips("ok", grp.ok, "Ready to train")}${chips("soon", grp.soon, "Ready tomorrow")}${chips("no", grp.no, "Recovering")}</div>
     ${cardioBars()}
     ${lifts.length ? `<div class="tile"><div class="shead"><span class="lbl">Personal records</span><select class="field" id="prSel" style="width:auto;min-height:36px;font-size:14px">${lifts.map(n => `<option ${n === S.prEx ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></div>${prChart(S.prEx)}</div>` : ""}
     ${z2 ? `<div class="tile"><span class="lbl">Zone 2 pace</span>${paceChart()}</div>` : ""}
     <div class="tile"><span class="lbl">Last 5 weeks</span>${heatmap()}</div>
-    <div class="tile"><span class="lbl">This week</span><div class="grid" style="grid-template-columns:repeat(3,1fr)">
-      <div><div class="stat">${week.length}</div><span class="small">workouts</span></div>
-      <div><div class="stat">${fmtNum(week.reduce((a, s) => a + volume(s), 0))}</div><span class="small">kg lifted</span></div>
-      <div><div class="stat">${recordsThisWeek()}</div><span class="small">records</span></div>
-      <div><div class="stat">${(Math.round(runs().filter(x => x.day >= ws).reduce((a, x) => a + (x.distance_km || 0), 0) * 10) / 10)}</div><span class="small">km run</span></div>
-      <div><div class="stat">${streak()}</div><span class="small">day streak</span></div></div></div>
     ${locked.length ? `<div class="tile"><span class="lbl">More charts unlock as you log</span>${locked.map(x => `<span class="small">${x}</span>`).join("")}</div>` : ""}`;
 }
 
@@ -770,6 +860,10 @@ async function tick(id, ei, si) {
   else { e.done = !e.done; if (holdOn(s, ei)) S.hold = null; }
   copy.status = copy.exercises.length && copy.exercises.every(exDone) ? "done" : copy.status === "done" ? "planned" : copy.status;
   upsertLocal(copy);
+  if (copy.day === todayISO()) {   // session clock: starts with the first tick, stops when everything planned today is done
+    if (!lsGet("wk-start-" + copy.day)) lsSet("wk-start-" + copy.day, Date.now());
+    lsSet("wk-end-" + copy.day, todayList().every(x => x.status === "done") ? Date.now() : null);
+  }
   if (si >= 0 && e.sets[si].done) {
     const nx = nextUp();
     if (copy.status !== "done") startRest(nx);
@@ -799,8 +893,8 @@ function nextUp() {
   const zone = /zone 2/i.test(cur.s.title + cur.e.name) ? " · zone 2, 140–155 bpm" : "";
   return `${cur.s.title === cur.e.name ? cur.e.name : cur.s.title + ": " + cur.e.name}${cur.e.min ? " · " + cur.e.min + " min" : ""}${zone}`;
 }
-function startRest(msg) { S.restEnd = Date.now() + REST_SEC * 1000; S.restMsg = msg; schedulePush(msg); }
-function stopRest() { const was = S.restEnd; S.restEnd = 0; if (was) cancelPush(); }
+function startRest(msg, sec = REST_SEC) { S.restEnd = Date.now() + sec * 1000; S.restMsg = msg; schedulePush(msg, sec); drawRest(); }
+function stopRest() { const was = S.restEnd; S.restEnd = 0; if (was) cancelPush(); drawRest(); }
 
 /* ---------- lock-screen notifications (Web Push) ---------- */
 function b64u(s) { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(b, c => c.charCodeAt(0)); }
@@ -821,12 +915,12 @@ async function disablePush() {
   if (sub) { await sb.from("wk_push").delete().eq("endpoint", sub.endpoint); await sub.unsubscribe(); }
   S.pushOn = false;
 }
-async function schedulePush(msg) {
+async function schedulePush(msg, sec = REST_SEC) {
   if (S.mode !== "live" || !S.pushOn) return;
   try {
     const token = crypto.randomUUID();
     const { error } = await sb.from("wk_rest").upsert({ user_id: uid, token }); if (error) throw error;
-    await sb.functions.invoke("workout-push", { body: { delay: REST_SEC, token, title: "Rest's over", body: msg } });
+    await sb.functions.invoke("workout-push", { body: { delay: Math.max(1, Math.round(sec)), token, title: "Rest's over", body: msg } });
   } catch (err) { console.warn("push schedule failed", err); }
 }
 async function cancelPush() { if (S.mode === "live" && S.pushOn) try { await sb.from("wk_rest").delete().eq("user_id", uid); } catch {} }
@@ -840,6 +934,9 @@ document.addEventListener("click", async e => {
     else if (a === "shiftday") { S.day = addDays(S.day, +b.dataset.n); S.logTouched = true; render(); }
     else if (a === "gotoday") { S.day = todayISO(); render(); }
     else if (a === "goday") { S.tab = "log"; S.day = id; S.logTouched = id !== todayISO(); render(); window.scrollTo(0, 0); }
+    else if (a === "startworkout") { unlockAudio(); const t = todayISO(); if (!lsGet("wk-start-" + t) && todayList().some(x => x.status !== "done")) lsSet("wk-start-" + t, Date.now()); S.tab = "log"; S.day = t; S.logTouched = false; render(); window.scrollTo(0, 0); }
+    else if (a === "restadj") { const left = Math.max(5, (S.restEnd - Date.now()) / 1000 + +b.dataset.n); startRest(S.restMsg, left); }
+    else if (a === "actview") { S.actView = id; render(); }
     else if (a === "editdaily") { S.editDaily = true; render(); document.getElementById("dRhr")?.focus(); }
     else if (a === "hold") { startHold(id, +b.dataset.ei); render(); }
     else if (a === "holdoff") { S.hold = null; render(); }
@@ -926,23 +1023,20 @@ async function startLive(user) {
     .subscribe();
 }
 function startPreview() { api = previewApi(); S.mode = "preview"; render(); }
-// Tick the rest and hold timers without redrawing the whole page.
-function setRing(kind, frac, text) {
-  const C = 2 * Math.PI * 26, arc = document.getElementById(kind + "Ring");
-  if (arc) arc.setAttribute("stroke-dasharray", `${(Math.max(0, Math.min(1, frac)) * C).toFixed(1)} ${C.toFixed(1)}`);
-  document.querySelectorAll(`[data-${kind}text]`).forEach(el => el.textContent = text);
-}
+// Tick the rest, hold and session timers without redrawing the whole page.
+function setText(kind, text) { document.querySelectorAll(`[data-${kind}text]`).forEach(el => el.textContent = text); }
 setInterval(() => {
   if (S.restEnd) {
     const left = (S.restEnd - Date.now()) / 1000;
-    if (left <= 0) { S.restEnd = 0; beep(); showAlert("Rest's over", S.restMsg || nextUp()); if (!S.sheet && !typing()) render(); }
-    else setRing("rest", left / REST_SEC, mmss(left));
+    if (left <= 0) { S.restEnd = 0; beep(); showAlert("Rest's over", S.restMsg || nextUp()); drawRest(); }
+    else setText("rest", mmss(left));
   }
   if (S.hold) {
     const left = (S.hold.end - Date.now()) / 1000;
     if (left <= 0) { const h = S.hold; S.hold = null; beep(); showAlert("Time's up", h.name); const e = S.sessions.find(x => x.id === h.id)?.exercises[h.ei]; if (e && !e.done) tick(h.id, h.ei, -1); else if (!S.sheet) render(); }
-    else setRing("hold", left / S.hold.total, mmss(left));
+    else setText("hold", mmss(left));
   }
+  const el = document.querySelector("[data-elapsed]"); if (el) { const v = elapsed(S.day); if (v !== null) el.textContent = clockHMS(v); }
 }, 500);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.mode === "live") scheduleReload(); });
 

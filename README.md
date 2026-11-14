@@ -2,9 +2,9 @@
 
 A phone-first workout tracker, built the same way as Plan: a static page on GitHub Pages, with data in the same Supabase project and the same sign-in. It keeps its data in its own `wk_*` tables.
 
-- **Today:** a week strip, a morning recovery check (resting heart rate and HRV against your normal numbers), the set you're on with a rest-timer ring, today's full checklist and weekly rings.
-- **Log:** each day's workouts. Change any set's weight or reps to what you actually did, tick it off, and see what you did last time and what to lift next time. Stretches have a countdown timer. Type exercises one per line, like `Bench press: 4x8 @60` (kg) or `Run: 20 min`.
-- **Progress:** a front-and-back muscle recovery map, 7-day cardio load, a personal-record line per lift, zone 2 pace, a 5-week calendar and a weekly recap.
+- **Home:** a week strip, a 0–100 recovery score from your morning resting heart rate and HRV, today's plan with a Start button, and weekly lift, cardio and stretch counts.
+- **Workout:** a logging table per exercise with last time's numbers, editable weight and reps, rows that turn green, live time, volume and sets, and a rest bar with −15, +15 and Skip. Stretches have a countdown timer.
+- **Activity:** a feed of finished workouts with three big numbers each, plus Trends (front-and-back recovery map, cardio load, personal records, zone 2 pace, 5-week calendar).
 - **Claude:** chat in the Claude app and Claude plans or changes your workouts directly. Every change shows up here with Undo.
 
 Open `index.html?preview` to try it with sample data. Nothing is saved in preview mode.
